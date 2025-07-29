@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>長良川カヌー川下りゲーム 3D</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="ui">
+            <div>スコア: <span id="score">0</span></div>
+            <div>速度: <span id="speed">1.0</span> km/h</div>
+            <div>高度: <span id="altitude">2.0</span> m</div>
+        </div>
+        
+        <div id="bridgeInfo">
+            <div id="nextBridge">次の橋を準備中...</div>
+        </div>
+        
+        <div id="controls">
+            <button id="paddleBtn" class="control-btn">漕ぐ ⛵<br><span style='font-size:0.7em'>(↑キー/W)</span></button>
+            <button id="duckBtn" class="control-btn">しゃがむ ⬇️<br><span style='font-size:0.7em'>(↓キー/S)</span></button>
+        </div>
+        
+        <div id="warning" class="warning">
+            橋が近づいています！しゃがんで！
+        </div>
+        
+        <div id="duckingIndicator">
+            しゃがみ中
+        </div>
+        
+        <div id="gameOver">
+            <h2>ゲームオーバー!</h2>
+            <p>橋に衝突してしまいました...</p>
+            <p>最終スコア: <span id="finalScore">0</span></p>
+            <button onclick="restartGame()" class="control-btn" style="margin-top: 20px;">もう一度プレイ</button>
+        </div>
+    </div>
+
+    <div id="seaAnimation" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:linear-gradient(to top, #0099ff 60%, #fff 100%);display:none;z-index:300;">
+        <div style="position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);font-size:3em;color:white;text-shadow:2px 2px 8px #0077bb;">海に到着！<br>おつかれさまでした</div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="kanoe.js"></script>
+</body>
+</html>

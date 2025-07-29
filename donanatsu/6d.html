@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Donanuts - 完全版（判定修正済み）</title>
+  <style>
+    canvas { border: 2px solid #444; display: block; margin: 20px auto; }
+  </style>
+</head>
+<body>
+<canvas id="gameCanvas" width="300" height="600"></canvas>
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+const COLS = 6;
+const ROWS = 12;
+const SIZE = 50;
+const donuts = ["d1.png", "d2.png", "d3.png", "d4.png"];
+const rainbow = "dr.png";
+
+let donutImages = [];
+let rainbowImage = new Image();
+rainbowImage.src = rainbow;
+
+let board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+let activePair = null;
+let nextPair = null; // Added for next pair preview
+let fallTimer = 0;
+const fallInterval = 30;
+let loaded = 0;
+let state = "fall";
+let matched = [];
+let chainCount = 0;
+let gameOver = false;
+let score = 0; // Added for scorekeeping
+
+for (let i = 0; i < donuts.length; i++) {
+  const img = new Image();
+  img.src = donuts[i];
+  img.onload = () => {
+    loaded++;
+    if (loaded === donuts.length) {
+      // Initialize both active and next pair
+      nextPair = generateRandomPair();
+      spawnNewPair();
+      requestAnimationFrame(gameLoop);
+    }
+  };
+  donutImages.push(img);
+}
+
+function generateRandomPair() {
+    return {
+        type1: Math.floor(Math.random() * 4),
+        type2: Math.floor(Math.random() * 4),
+        x: 2, // Default spawn X
+        y: 0, // Default spawn Y
+        rotation: 0,
+    };
+}
+
+function spawnNewPair() {
+  // Game Over check
+  if (board[0][2] !== null || board[1][2] !== null) {
+    gameOver = true;
+    alert("GAMEOVER! Score: " + score);
+    return;
+  }
+
+  activePair = nextPair;
+  activePair.x = 2; // Reset x for active pair spawn
+  activePair.y = 0; // Reset y for active pair spawn
+  activePair.rotation = 0; // Reset rotation for active pair spawn
+  nextPair = generateRandomPair(); // Generate new next pair
+}
+
+function drawBoard() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw board donuts
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      const t = board[y][x];
+      if (t !== null && t !== "rainbow") {
+        ctx.drawImage(donutImages[t], x * SIZE, y * SIZE, SIZE, SIZE);
+      }
+      if (t === "rainbow") {
+        ctx.drawImage(rainbowImage, x * SIZE - SIZE / 2, y * SIZE - SIZE / 2, SIZE * 2, SIZE * 2);
+      }
+    }
+  }
+
+  // Draw active pair
+  if (activePair) {
+    let [x1, y1, x2, y2] = getPairCoords();
+    ctx.drawImage(donutImages[activePair.type1], x1 * SIZE, y1 * SIZE, SIZE, SIZE);
+    ctx.drawImage(donutImages[activePair.type2], x2 * SIZE, y2 * SIZE, SIZE, SIZE);
+  }
+
+  // Draw next pair preview on the right
+  if (nextPair) {
+    const previewXOffset = COLS * SIZE + 10; // Position to the right of the board
+    const previewYOffset = 50; // Some vertical offset
+
+    // Draw the first donut of the next pair
+    ctx.drawImage(donutImages[nextPair.type1], previewXOffset, previewYOffset, SIZE, SIZE);
+
+    // Draw the second donut of the next pair based on its default rotation (or no rotation preview)
+    // For simplicity, let's just show them stacked or side-by-side
+    // Here, showing them stacked as if rotation 0
+    ctx.drawImage(donutImages[nextPair.type2], previewXOffset, previewYOffset + SIZE, SIZE, SIZE);
+  }
+
+  // Display Score
+  ctx.fillStyle = "black";
+  ctx.font = "20px Arial";
+  ctx.fillText("Score: " + score, 10, 30); // Position score at top-left
+}
+
+function getPairCoords() {
+  const { x, y, rotation } = activePair;
+  let dx = [0, 1, 0, -1][rotation];
+  let dy = [-1, 0, 1, 0][rotation];
+  return [x, y, x + dx, y + dy];
+}
+
+function canMove(x, y) {
+  return x >= 0 && x < COLS && y < ROWS && (y < 0 || board[y][x] === null);
+}
+
+function move(dx, dy) {
+  let [x1, y1, x2, y2] = getPairCoords();
+  if (canMove(x1 + dx, y1 + dy) && canMove(x2 + dx, y2 + dy)) {
+    activePair.x += dx;
+    activePair.y += dy;
+  }
+}
+
+function rotatePair() {
+  let nextRot = (activePair.rotation + 1) % 4;
+  const { x, y } = activePair;
+  let dx = [0, 1, 0, -1][nextRot];
+  let dy = [-1, 0, 1, 0][nextRot];
+  let x2 = x + dx;
+  let y2 = y + dy;
+  if (canMove(x2, y2)) {
+    activePair.rotation = nextRot;
+  }
+}
+
+function fixToBoard() {
+  let [x1, y1, x2, y2] = getPairCoords();
+  if (y1 >= 0) board[y1][x1] = activePair.type1;
+  if (y2 >= 0) board[y2][x2] = activePair.type2;
+  activePair = null;
+  state = "match";
+}
+
+function checkMatches() {
+  matched = [];
+  let visited = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      let t = board[y][x];
+      if (t === null || visited[y][x]) continue;
+
+      let group = [];
+      let queue = [[x, y]];
+      visited[y][x] = true;
+
+      while (queue.length) {
+        let [cx, cy] = queue.pop();
+        group.push([cx, cy]);
+
+        for (let [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+          let nx = cx + dx, ny = cy + dy;
+          if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS && !visited[ny][nx]) {
+            if (board[ny][nx] === t) {
+              visited[ny][nx] = true;
+              queue.push([nx, ny]);
+            }
+          }
+        }
+      }
+
+      if (group.length >= 7) {
+        matched.push({ type: t, coords: group });
+      }
+    }
+  }
+}
+
+function clearMatches() {
+  let rainbowDonutCount = 0;
+  let rainbowDonutPositions = [];
+
+  for (let match of matched) {
+    score += match.coords.length * 10; // Add score based on cleared donuts
+    for (let [x, y] of match.coords) {
+      board[y][x] = null;
+    }
+    let [rx, ry] = match.coords[Math.floor(Math.random() * match.coords.length)];
+    board[ry][rx] = "rainbow";
+    rainbowDonutCount++;
+    rainbowDonutPositions.push([rx, ry]);
+  }
+
+  // Clear surrounding donuts based on rainbow donut count
+  for (let [rx, ry] of rainbowDonutPositions) {
+    const clearRadius = (rainbowDonutCount >= 2) ? 2 : 1; // 2 for 15 donuts (radius 2), 1 for 8 donuts (radius 1)
+
+    for (let dy = -clearRadius; dy <= clearRadius; dy++) {
+      for (let dx = -clearRadius; dx <= clearRadius; dx++) {
+        if (dx === 0 && dy === 0) continue; // Skip the rainbow donut itself
+        let nx = rx + dx;
+        let ny = ry + dy;
+        if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS && board[ny][nx] !== null) {
+          board[ny][nx] = null;
+        }
+      }
+    }
+  }
+
+  state = "rainbow";
+  setTimeout(() => {
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        if (board[y][x] === "rainbow") board[y][x] = null;
+      }
+    }
+    state = "drop";
+  }, 500);
+}
+
+function applyGravity() {
+  let moved = false;
+  for (let x = 0; x < COLS; x++) {
+    for (let y = ROWS - 2; y >= 0; y--) {
+      if (board[y][x] !== null && board[y+1][x] === null) {
+        board[y+1][x] = board[y][x];
+        board[y][x] = null;
+        moved = true;
+      }
+    }
+  }
+  if (moved) return;
+  checkMatches();
+  if (matched.length > 0) {
+    clearMatches();
+    chainCount++;
+  } else {
+    chainCount = 0;
+    spawnNewPair();
+    state = "fall";
+  }
+}
+
+function gameLoop() {
+  if (gameOver) {
+    return;
+  }
+
+  drawBoard();
+
+  if (state === "fall" && activePair) {
+    fallTimer++;
+    if (fallTimer >= fallInterval) {
+      fallTimer = 0;
+
+      let [x1, y1, x2, y2] = getPairCoords();
+      if (canMove(x1, y1 + 1) && canMove(x2, y2 + 1)) {
+        activePair.y += 1;
+      } else {
+        fixToBoard();
+      }
+    }
+  } else if (state === "match") {
+    checkMatches();
+    if (matched.length > 0) {
+      clearMatches();
+    } else {
+      spawnNewPair();
+      if (!gameOver) {
+        state = "fall";
+      }
+    }
+  } else if (state === "drop") {
+    applyGravity();
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+
+document.addEventListener("keydown", (e) => {
+  if (!activePair || gameOver) return;
+  if (e.key === "ArrowLeft") move(-1, 0);
+  if (e.key === "ArrowRight") move(1, 0);
+  if (e.key === "ArrowDown") move(0, 1);
+  if (e.key === "ArrowUp") rotatePair();
+});
+</script>
+</body>
+</html>

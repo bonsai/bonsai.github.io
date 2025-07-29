@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Donanuts Falling Animation</title>
+  <style>
+    canvas {
+      border: 2px solid #444;
+      display: block;
+      margin: 20px auto;
+    }
+  </style>
+</head>
+<body>
+<canvas id="gameCanvas" width="300" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+const COLS = 6;
+const ROWS = 12;
+const SIZE = 50;
+const donuts = ["d1.png", "d2.png", "d3.png", "d4.png"];
+
+let donutImages = [];
+let loaded = 0;
+let matchFound = false;
+let showRainbow = false;
+let rainbowFrame = 0;
+
+let board = createBoard();
+
+function createBoard() {
+  let board = [];
+  for (let y = 0; y < ROWS; y++) {
+    board[y] = [];
+    for (let x = 0; x < COLS; x++) {
+      board[y][x] = null;
+    }
+  }
+
+  for (let y = 0; y < 4; y++) {
+    for (let x = 0; x < COLS; x++) {
+      const type = Math.floor(Math.random() * donuts.length);
+      const piece = {
+        type,
+        x,
+        y: y * SIZE,
+        targetY: y * SIZE
+      };
+      board[y][x] = piece;
+    }
+  }
+
+  return board;
+}
+
+for (let i = 0; i < donuts.length; i++) {
+  const img = new Image();
+  img.src = donuts[i];
+  img.onload = () => {
+    loaded++;
+    if (loaded === donuts.length) {
+      requestAnimationFrame(gameLoop);
+    }
+  };
+  donutImages.push(img);
+}
+
+function drawBoard() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      const piece = board[y][x];
+      if (piece) {
+        ctx.drawImage(
+          donutImages[piece.type],
+          x * SIZE,
+          piece.y,
+          SIZE,
+          SIZE
+        );
+      }
+    }
+  }
+
+  if (showRainbow) {
+    ctx.fillStyle = `hsl(${(rainbowFrame * 10) % 360}, 100%, 50%)`;
+    ctx.font = "40px sans-serif";
+    ctx.fillText("🌈 RAINBOW!", 50, 300);
+    rainbowFrame++;
+    if (rainbowFrame > 60) {
+      showRainbow = false;
+      rainbowFrame = 0;
+      board = createBoard(); // 全消し後、再生成
+    }
+  }
+}
+
+function applyGravityAnimated() {
+  for (let x = 0; x < COLS; x++) {
+    for (let y = ROWS - 2; y >= 0; y--) {
+      const piece = board[y][x];
+      if (piece && !board[y + 1][x]) {
+        let dropY = y;
+        while (dropY + 1 < ROWS && !board[dropY + 1][x]) {
+          dropY++;
+        }
+        board[dropY][x] = piece;
+        board[y][x] = null;
+        piece.targetY = dropY * SIZE;
+      }
+    }
+  }
+}
+
+function animateFall(delta = 5) {
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      const piece = board[y][x];
+      if (piece) {
+        if (piece.y < piece.targetY) {
+          piece.y += delta;
+          if (piece.y > piece.targetY) piece.y = piece.targetY;
+        }
+      }
+    }
+  }
+}
+
+function isFalling() {
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      const piece = board[y][x];
+      if (piece && piece.y !== piece.targetY) return true;
+    }
+  }
+  return false;
+}
+
+function checkMatches() {
+  // 横チェック
+  for (let y = 0; y < ROWS; y++) {
+    let count = 1;
+    for (let x = 1; x < COLS; x++) {
+      const cur = board[y][x];
+      const prev = board[y][x - 1];
+      if (cur && prev && cur.type === prev.type) {
+        count++;
+        if (count === 7) return true;
+      } else {
+        count = 1;
+      }
+    }
+  }
+
+  // 縦チェック
+  for (let x = 0; x < COLS; x++) {
+    let count = 1;
+    for (let y = 1; y < ROWS; y++) {
+      const cur = board[y][x];
+      const prev = board[y - 1][x];
+      if (cur && prev && cur.type === prev.type) {
+        count++;
+        if (count === 7) return true;
+      } else {
+        count = 1;
+      }
+    }
+  }
+
+  return false;
+}
+
+function gameLoop() {
+  if (!showRainbow) {
+    applyGravityAnimated();
+    animateFall();
+    if (!isFalling() && !matchFound) {
+      if (checkMatches()) {
+        matchFound = true;
+        showRainbow = true;
+      }
+    }
+    if (showRainbow && !isFalling()) {
+      matchFound = false;
+    }
+  }
+
+  drawBoard();
+  requestAnimationFrame(gameLoop);
+}
+</script>
+</body>
+</html>
