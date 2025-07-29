@@ -1,0 +1,61 @@
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
+    font-family: 'Arial', sans-serif;
+}
+
+#gameContainer {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+#gameCanvas {
+    border: 3px solid #333;
+    border-radius: 10px;
+    background: #f0f8ff;
+    display: block;
+    margin: 0 auto;
+}
+
+#gameUI {
+    margin-top: 15px;
+}
+
+#score {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+#instructions {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.4;
+}
+
+#instructions p {
+    margin: 5px 0;
+}
+
+/* Game Over and Success styles */
+.game-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    z-index: 1000;
+}
