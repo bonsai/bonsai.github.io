@@ -46,6 +46,12 @@
             bottom: 150px; /* ジャンプ時の高さ */
         }
 
+        /* 飛行時のスタイル（任意で追加、例: 影を消すなど） */
+        #girlCanvas.flying {
+            /* bottomはJSで直接制御 */
+            /* filter: drop-shadow(0 0 10px rgba(255,255,0,0.5)); */ /* 飛行中のエフェクトなど */
+        }
+
         /* ぶどうのスタイル */
         .grape {
             position: absolute;
@@ -133,19 +139,19 @@
             pointer-events: none; /* クリックイベントを透過 */
             z-index: 25;
             animation: floatUp 1s ease-out forwards; /* 浮き上がるアニメーション */
-            text-align: center; /* テキストを中央揃え */
             white-space: nowrap; /* テキストの折り返しを防ぐ */
+            transform: translateX(-50%); /* テキスト自身の幅に基づいて中央揃え */
         }
 
         /* フローティングテキストのアニメーションキーフレーム */
         @keyframes floatUp {
             0% {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateY(0) translateX(-50%);
             }
             100% {
                 opacity: 0;
-                transform: translateY(-50px);
+                transform: translateY(-50px) translateX(-50%);
             }
         }
 
@@ -283,14 +289,23 @@
         score: 0,
         health: 100,
         grapeCount: 0,
-        girlX: window.innerWidth / 2, // プレイヤーの中央位置
+        girlX: window.innerWidth / 2, // プレイヤーの中央X位置
+        girlY: 50, // プレイヤーの現在のbottom位置（地面からの高さ）
         grapes: [],
         grapeSpeed: 2,
         spawnRate: 0.02,
         isJumping: false, // ジャンプ状態を管理するフラグ
         lastTapTime: 0, // ダブルタッチ検出用
         moveDirection: 0, // -1: 左, 0: 停止, 1: 右
-        playerSpeed: 8 // プレイヤーの移動速度
+        verticalMoveDirection: 0, // -1: 下, 0: 停止, 1: 上 (飛行時のみ)
+        playerSpeed: 8, // プレイヤーの水平移動速度
+        verticalSpeed: 5, // プレイヤーの垂直移動速度 (飛行時のみ)
+        juiceDrinksCount: 0, // ジュースを飲んだ回数
+        goldenGrapeActive: false, // 金のぶどうが現在出現中か
+        goldenGrapeElement: null, // 金のぶどうのDOM要素
+        isFlying: false, // プレイヤーが飛行中か
+        flyDuration: 7000, // 飛行する時間（ミリ秒）
+        flyTimer: null // 飛行終了のタイマーID
     };
 
     // キャンバス設定
@@ -308,6 +323,7 @@
         drawGirl(); // 画像読み込み完了時に初回描画
         // 画像がロードされたらgirlCanvasの初期位置を更新
         girlCanvas.style.left = (gameState.girlX - girlCanvas.width / 2) + 'px';
+        girlCanvas.style.bottom = gameState.girlY + 'px'; // 初期Y位置を設定
     };
     girlImage.onerror = () => {
         console.error("女の子の画像の読み込みに失敗しました。パスを確認してください: " + girlImage.src);
@@ -431,6 +447,56 @@
         return grape;
     }
 
+    // 金のぶどうを生成する関数
+    function createGoldenGrape() {
+        if (gameState.goldenGrapeActive) return; // 既に金のぶどうがある場合は生成しない
+
+        const goldenGrape = document.createElement('div');
+        goldenGrape.className = 'grape'; // 基本スタイルは通常のぶどうと同じ
+        goldenGrape.id = 'goldenGrape'; // 金のぶどうであることを識別するためのID
+        goldenGrape.style.left = Math.random() * (window.innerWidth - 80) + 'px';
+        goldenGrape.style.animationDuration = '8s'; // 通常よりゆっくり落下
+        goldenGrape.style.animationIterationCount = '1'; // 1回だけ落下
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 80;
+        canvas.height = 80;
+        const ctx = canvas.getContext('2d');
+
+        // 金のぶどうの描画 (金色でキラキラするような表現)
+        ctx.fillStyle = '#FFD700'; // 金色
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 4 - i; j++) {
+                ctx.beginPath();
+                ctx.arc(20 + j * 15 + i * 7, 25 + i * 12, 8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        // キラキラ効果
+        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        ctx.beginPath();
+        ctx.arc(40, 30, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(55, 45, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        goldenGrape.appendChild(canvas);
+        document.getElementById('gameContainer').appendChild(goldenGrape);
+
+        gameState.goldenGrapeActive = true;
+        gameState.goldenGrapeElement = goldenGrape;
+
+        // 金のぶどうが画面外に落ちた場合の処理
+        goldenGrape.addEventListener('animationend', () => {
+            if (goldenGrape.parentNode) {
+                goldenGrape.remove();
+                gameState.goldenGrapeActive = false;
+                gameState.goldenGrapeElement = null;
+            }
+        });
+    }
+
     function checkCollision(grape) {
         const grapeRect = grape.getBoundingClientRect();
         const girlRect = girlCanvas.getBoundingClientRect();
@@ -444,27 +510,30 @@
             grapeRect.bottom > collisionHeightThreshold && // ぶどうの底が女の子の検出範囲に入ったら
             grapeRect.top < girlRect.bottom) { // ぶどうの上部が女の子の足元より上にある
             
-            catchGrape(grape, grapeRect); // grapeRect全体を渡すように変更
+            if (grape.id === 'goldenGrape') {
+                catchGoldenGrape(grape, grapeRect);
+            } else {
+                catchGrape(grape, grapeRect); 
+            }
             return true;
         }
         return false;
     }
 
-    // catchGrape関数にgrapeRectオブジェクト全体を渡すように変更
+    // 通常のぶどうをキャッチした際の処理
     function catchGrape(grape, grapeRect) {
         grape.remove();
         gameState.grapeCount++;
         gameState.score += 10;
         
         // スコアのフローティングテキストをぶどうの消える位置に表示
-        // grapeRect.left + grapeRect.width / 2 でぶどうの中心X座標を取得
         showFloatingText('+10', grapeRect.left + grapeRect.width / 2, grapeRect.top, 24);
         
         updateUI();
 
         // 音を鳴らすロジック (Web Audio APIを使用)
         const screenHeight = window.innerHeight;
-        const normalizedY = grapeRect.top / screenHeight; // grapeRect.top を使用
+        const normalizedY = grapeRect.top / screenHeight; 
         
         const noteIndex = Math.min(notes.length - 1, Math.max(0, Math.floor((1 - normalizedY) * notes.length))); 
         
@@ -480,15 +549,36 @@
         }
     }
 
+    // 金のぶどうをキャッチした際の処理
+    function catchGoldenGrape(goldenGrape, grapeRect) {
+        goldenGrape.remove();
+        gameState.goldenGrapeActive = false;
+        gameState.goldenGrapeElement = null;
+        gameState.score += 100; // ボーナススコア
+        showFloatingText('ゴールデンぶどう！ +100', grapeRect.left + grapeRect.width / 2, grapeRect.top, 24);
+        showFloatingText('空を飛べる！', grapeRect.left + grapeRect.width / 2, grapeRect.top - 30, 20);
+        updateUI();
+
+        activateFlyingMode(); // 飛行モードをアクティブにする
+    }
+
     function drinkJuice() {
         gameState.health = Math.min(100, gameState.health + 30);
         gameState.grapeCount = 0;
         gameState.score += 50;
         
+        gameState.juiceDrinksCount++; // ジュースを飲んだ回数を増やす
+
         // ジュース完成のテキストもプレイヤー位置ではなく、中央に表示
         showFloatingText('ジュース完成！ +50', window.innerWidth / 2, window.innerHeight / 2 - 50, 24);
         updateUI();
         updateHealth();
+
+        // ジュースを3回飲んだら金のぶどうを出現させる
+        if (gameState.juiceDrinksCount >= 3) {
+            createGoldenGrape();
+            gameState.juiceDrinksCount = 0; // カウントをリセットして、再度金のぶどうが出現できるようにする
+        }
     }
 
     // showFloatingText関数にfontSize引数を追加
@@ -496,8 +586,7 @@
         const element = document.createElement('div');
         element.className = 'floating-text';
         element.textContent = text;
-        // テキストを中央揃えにするために、X座標からテキスト幅の半分を引く
-        element.style.left = (x - (text.length * fontSize / 4)) + 'px'; // 簡易的な中央揃え
+        element.style.left = x + 'px'; // X座標を設定
         element.style.top = y + 'px';
         element.style.fontSize = fontSize + 'px'; // フォントサイズを設定
         document.getElementById('gameContainer').appendChild(element);
@@ -526,9 +615,9 @@
         location.reload();
     }
 
-    // ジャンプ機能
+    // ジャンプ機能（飛行モードでない場合のみ）
     function jump() {
-        if (!gameState.isPlaying || gameState.isJumping) return;
+        if (!gameState.isPlaying || gameState.isJumping || gameState.isFlying) return; // 飛行中はジャンプしない
 
         gameState.isJumping = true;
         girlCanvas.classList.add('jumping'); // CSSクラスを追加してジャンプアニメーション開始
@@ -538,6 +627,36 @@
             gameState.isJumping = false;
         }, 400); // ジャンプアニメーションの時間（CSSのtransition時間と合わせる）
     }
+
+    // 飛行モードをアクティブにする関数
+    function activateFlyingMode() {
+        if (gameState.isFlying) {
+            clearTimeout(gameState.flyTimer); // 既に飛行中の場合、タイマーをリセット
+        }
+        gameState.isFlying = true;
+        girlCanvas.classList.add('flying'); // 飛行中の視覚的フィードバック（任意）
+        
+        // プレイヤーを高い位置に移動させる
+        gameState.girlY = window.innerHeight * 0.6; // 画面の60%くらいの高さに設定
+        girlCanvas.style.bottom = gameState.girlY + 'px';
+        
+        showFloatingText('飛行開始！', gameState.girlX, window.innerHeight - 200, 20);
+
+        // 一定時間後に飛行モードを解除するタイマーを設定
+        gameState.flyTimer = setTimeout(() => {
+            deactivateFlyingMode();
+        }, gameState.flyDuration);
+    }
+
+    // 飛行モードを解除する関数
+    function deactivateFlyingMode() {
+        gameState.isFlying = false;
+        girlCanvas.classList.remove('flying');
+        girlCanvas.style.bottom = '50px'; // 地面に戻る
+        gameState.girlY = 50; // girlYも地面の高さにリセット
+        showFloatingText('飛行終了', gameState.girlX, window.innerHeight - 100, 20);
+    }
+
 
     // ゲーム開始関数 (HTMLのonclick属性から呼ばれる)
     function startGame() {
@@ -559,28 +678,36 @@
     function gameLoop() {
         if (!gameState.isPlaying) return;
         
-        // プレイヤーの移動を更新
+        // プレイヤーの水平移動を更新
         if (gameState.moveDirection !== 0) {
-            // プレイヤーの新しいX座標を計算
             let newGirlX = gameState.girlX + gameState.moveDirection * gameState.playerSpeed;
-            
-            // 画面の端に行き過ぎないように制御
             const girlWidth = girlCanvas.width;
             newGirlX = Math.max(girlWidth / 2, Math.min(window.innerWidth - (girlWidth / 2), newGirlX));
-            
             gameState.girlX = newGirlX;
             girlCanvas.style.left = (gameState.girlX - girlWidth / 2) + 'px';
         }
 
+        // 飛行モード中の垂直移動
+        if (gameState.isFlying && gameState.verticalMoveDirection !== 0) {
+            let newGirlY = gameState.girlY + gameState.verticalMoveDirection * gameState.verticalSpeed;
+            // 垂直位置のクランプ（画面の下端と上端の間）
+            newGirlY = Math.max(50, Math.min(window.innerHeight - girlCanvas.height - 20, newGirlY));
+            gameState.girlY = newGirlY;
+            girlCanvas.style.bottom = gameState.girlY + 'px';
+        }
+
+        // ぶどうの生成
         if (Math.random() < gameState.spawnRate) {
             createGrape();
         }
         
+        // 衝突判定
         const grapes = document.querySelectorAll('.grape');
         grapes.forEach(grape => {
             checkCollision(grape); 
         });
         
+        // 時間経過でヘルスが減少
         if (Math.random() < 0.005) { 
             gameState.health -= 1;
             updateHealth();
@@ -605,13 +732,22 @@
         handleMove(e.touches[0].clientX);
     }, { passive: false });
 
-    // キーボードイベント (ジャンプと左右移動)
+    // キーボードイベント (ジャンプと左右移動、飛行中の上下移動)
     document.addEventListener('keydown', (e) => {
         if (!gameState.isPlaying) return;
 
         if (e.code === 'Space' || e.code === 'ArrowUp') {
             e.preventDefault(); // スペースキーによるスクロールなどを防止
-            jump();
+            if (gameState.isFlying) {
+                gameState.verticalMoveDirection = 1; // 飛行中に上へ
+            } else {
+                jump(); // 通常のジャンプ
+            }
+        } else if (e.code === 'ArrowDown') {
+            e.preventDefault();
+            if (gameState.isFlying) {
+                gameState.verticalMoveDirection = -1; // 飛行中に下へ
+            }
         } else if (e.code === 'ArrowLeft') {
             gameState.moveDirection = -1; // 左移動
         } else if (e.code === 'ArrowRight') {
@@ -623,11 +759,17 @@
         if (!gameState.isPlaying) return;
 
         if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
-            // 押されていたキーが離されたら移動を停止
-            // 両方のキーが押されている状態で片方が離された場合を考慮
+            // 押されていたキーが離されたら水平移動を停止
             if ((e.code === 'ArrowLeft' && gameState.moveDirection === -1) || 
                 (e.code === 'ArrowRight' && gameState.moveDirection === 1)) {
                 gameState.moveDirection = 0;
+            }
+        } else if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowDown') {
+            // 飛行中に上下キーが離されたら垂直移動を停止
+            if (gameState.isFlying && 
+                ((e.code === 'Space' || e.code === 'ArrowUp') && gameState.verticalMoveDirection === 1) ||
+                (e.code === 'ArrowDown' && gameState.verticalMoveDirection === -1)) {
+                gameState.verticalMoveDirection = 0;
             }
         }
     });
@@ -635,7 +777,13 @@
     // マウス ダブルクリック
     document.addEventListener('dblclick', (e) => {
         if (gameState.isPlaying) {
-            jump();
+            if (gameState.isFlying) {
+                // 飛行中にダブルクリックで上へ移動（単発ジャンプの代わりに）
+                gameState.verticalMoveDirection = 1;
+                setTimeout(() => gameState.verticalMoveDirection = 0, 100); // 短時間だけ上に動く
+            } else {
+                jump();
+            }
         }
     });
 
@@ -648,7 +796,13 @@
         
         if (tapLength < 300 && tapLength > 0) { // 300ms 以内の2回目のタップ
             e.preventDefault(); // デフォルトのダブルタップ動作（ズームなど）を防止
-            jump();
+            if (gameState.isFlying) {
+                // 飛行中にダブルタップで上へ移動
+                gameState.verticalMoveDirection = 1;
+                setTimeout(() => gameState.verticalMoveDirection = 0, 100); // 短時間だけ上に動く
+            } else {
+                jump();
+            }
         }
         gameState.lastTapTime = currentTime;
     }, { passive: false });
@@ -658,8 +812,8 @@
     updateUI();
     updateHealth();
     // ページロード時に画像の読み込みがまだであれば、girlCanvasは中央に表示されないため、ここで再設定
-    // onloadイベントで設定されるので、不要かもしれませんが念のため
     girlCanvas.style.left = (gameState.girlX - girlCanvas.width / 2) + 'px';
+    girlCanvas.style.bottom = gameState.girlY + 'px'; // 初期Y位置を再設定
 </script>
 </body>
 </html>
