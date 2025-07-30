@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, orientation=landscape">
+    <title>🍣 漢字寿司さんまい</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+            color: #333;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .title {
+            font-size: 2em;
+            font-weight: bold;
+            color: #d32f2f;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .score {
+            font-size: 1.5em;
+            color: #1976d2;
+            margin-top: 5px;
+        }
+
+        .game-area {
+            flex: 1;
+            position: relative;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .conveyor-belt {
+            flex: 1;
+            position: relative;
+            background: linear-gradient(90deg, #8b4513 0%, #a0522d 50%, #8b4513 100%);
+            border-top: 3px solid #654321;
+            border-bottom: 3px solid #654321;
+            overflow: hidden;
+        }
+
+        .belt-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent 0px,
+                transparent 30px,
+                rgba(255, 255, 255, 0.1) 30px,
+                rgba(255, 255, 255, 0.1) 32px
+            );
+            animation: belt-move 3s linear infinite;
+        }
+
+        @keyframes belt-move {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .plate {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #fff 30%, #f0f0f0 70%);
+            border: 3px solid #ddd;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            animation: float 2s ease-in-out infinite alternate;
+        }
+
+        .plate:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(-2px); }
+            100% { transform: translateY(2px); }
+        }
+
+        .player-table {
+            width: 200px;
+            background: rgba(139, 69, 19, 0.9);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border-left: 3px solid #654321;
+        }
+
+        .table-title {
+            color: white;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .slots {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .slot {
+            width: 100px;
+            height: 100px;
+            border: 3px dashed rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5em;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .slot.filled {
+            background: radial-gradient(circle, #fff 30%, #f0f0f0 70%);
+            border: 3px solid #ddd;
+            color: #333;
+            transform: scale(1.05);
+        }
+
+        .match-effect {
+            position: absolute;
+            font-size: 3em;
+            color: #ff6b6b;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            animation: bounce-up 1s ease-out forwards;
+            pointer-events: none;
+        }
+
+        @keyframes bounce-up {
+            0% { 
+                opacity: 1; 
+                transform: translateY(0) scale(0.5); 
+            }
+            50% { 
+                transform: translateY(-50px) scale(1.2); 
+            }
+            100% { 
+                opacity: 0; 
+                transform: translateY(-100px) scale(1); 
+            }
+        }
+
+        .combo {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 107, 107, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 1.2em;
+            font-weight: bold;
+            transform: scale(0);
+            animation: combo-appear 0.5s ease-out forwards;
+        }
+
+        @keyframes combo-appear {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+
+        @media (max-width: 768px) {
+            .title { font-size: 1.5em; }
+            .score { font-size: 1.2em; }
+            .plate { width: 60px; height: 60px; font-size: 1.5em; }
+            .slot { width: 80px; height: 80px; font-size: 2em; }
+            .player-table { width: 150px; padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <div class="title">🍣 漢字寿司さんまい</div>
+            <div class="score">スコア: <span id="score">0</span></div>
+        </div>
+        
+        <div class="game-area">
+            <div class="conveyor-belt" id="conveyor">
+                <div class="belt-pattern"></div>
+            </div>
+            
+            <div class="player-table">
+                <div class="table-title">あなたのテーブル</div>
+                <div class="slots">
+                    <div class="slot" id="slot0"></div>
+                    <div class="slot" id="slot1"></div>
+                    <div class="slot" id="slot2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ゲーム状態
+        let score = 0;
+        let plateId = 0;
+        let playerSlots = [null, null, null];
+        let combo = 0;
+        
+        // 魚の漢字リスト (これは音声データと同期させるため、JSONから取得します)
+        let fishKanji = []; 
+        let audioMap = {}; // 漢字と音声ファイルのパスをマッピング
+
+        // DOM要素
+        const conveyor = document.getElementById('conveyor');
+        const scoreElement = document.getElementById('score');
+        const slots = [
+            document.getElementById('slot0'),
+            document.getElementById('slot1'),
+            document.getElementById('slot2')
+        ];
+
+        // JSONデータを読み込み、音声ファイルをプリロード
+        async function loadGameData() {
+            try {
+                // fish_audio_data.jsonを読み込む
+                const response = await fetch('fish_audio_data.json');
+                const audioData = await response.json();
+
+                audioData.forEach(item => {
+                    fishKanji.push(item["漢字"]);
+                    // 音声ファイルをプリロードし、Audioオブジェクトとして保存
+                    const audio = new Audio(`audio_output/${item["MP3ファイル"]}`);
+                    // 大きな声にするために音量を少し上げる
+                    audio.volume = 1.5; // 標準が1.0なので、1.5にすると少し大きくなる
+                    audioMap[item["漢字"]] = audio;
+                });
+                console.log('ゲームデータと音声ファイルを読み込みました。');
+                startGame();
+            } catch (error) {
+                console.error('ゲームデータの読み込み中にエラーが発生しました:', error);
+                alert('ゲームデータの読み込みに失敗しました。MP3ファイルとJSONファイルが正しい場所に置かれているか確認してください。');
+            }
+        }
+
+        // 皿を生成
+        function createPlate() {
+            if (fishKanji.length === 0) {
+                console.warn('魚の漢字リストがまだ読み込まれていません。');
+                return;
+            }
+
+            const plate = document.createElement('div');
+            plate.className = 'plate';
+            plate.id = `plate-${plateId++}`;
+            
+            const kanji = fishKanji[Math.floor(Math.random() * fishKanji.length)];
+            plate.textContent = kanji;
+            plate.dataset.kanji = kanji;
+            
+            // ランダムな縦位置
+            const topPosition = Math.random() * (conveyor.clientHeight - 80);
+            plate.style.top = `${topPosition}px`;
+            plate.style.right = '-80px';
+            
+            // クリックイベント
+            plate.addEventListener('click', () => takePlate(plate));
+            
+            conveyor.appendChild(plate);
+            
+            // 皿を右から左に移動
+            let position = -80;
+            const moveInterval = setInterval(() => {
+                position += 3;
+                plate.style.right = `${position}px`;
+                
+                // 画面外に出たら削除
+                if (position > conveyor.clientWidth + 80) {
+                    if (plate.parentNode) {
+                        plate.parentNode.removeChild(plate);
+                    }
+                    clearInterval(moveInterval);
+                }
+            }, 16);
+        }
+
+        // 皿を取る
+        function takePlate(plate) {
+            // 空いているスロットを探す
+            const emptySlot = playerSlots.findIndex(slot => slot === null);
+            
+            if (emptySlot === -1) {
+                // スロットが満杯の場合、エフェクトを表示
+                showEffect('満杯！', conveyor.clientWidth / 2, conveyor.clientHeight / 2);
+                return;
+            }
+            
+            const kanji = plate.dataset.kanji;
+            
+            // スロットに配置
+            playerSlots[emptySlot] = kanji;
+            slots[emptySlot].textContent = kanji;
+            slots[emptySlot].classList.add('filled');
+            
+            // 皿を削除
+            if (plate.parentNode) {
+                plate.parentNode.removeChild(plate);
+            }
+            
+            // 3枚揃ったかチェック
+            checkMatch();
+        }
+
+        // マッチをチェック
+        function checkMatch() {
+            // 3枚すべて埋まっているかチェック
+            if (playerSlots.every(slot => slot !== null)) {
+                const [first, second, third] = playerSlots;
+                
+                if (first === second && second === third) {
+                    // マッチした！
+                    combo++;
+                    const points = 100 * combo;
+                    score += points;
+                    scoreElement.textContent = score;
+                    
+                    // エフェクト表示
+                    showEffect(`+${points}`, 100, 200);
+                    showCombo(combo);
+                    
+                    // 音声再生
+                    if (audioMap[first]) {
+                        audioMap[first].currentTime = 0; // 再生位置を最初に戻す
+                        audioMap[first].play();
+                    }
+                    
+                    // スロットをクリア
+                    clearSlots();
+                } else {
+                    // マッチしなかった
+                    combo = 0;
+                    showEffect('不一致...', 100, 250);
+                    
+                    // 少し待ってからスロットをクリア
+                    setTimeout(clearSlots, 1000);
+                }
+            }
+        }
+
+        // スロットをクリア
+        function clearSlots() {
+            playerSlots = [null, null, null];
+            slots.forEach(slot => {
+                slot.textContent = '';
+                slot.classList.remove('filled');
+            });
+        }
+
+        // エフェクトを表示
+        function showEffect(text, x, y) {
+            const effect = document.createElement('div');
+            effect.className = 'match-effect';
+            effect.textContent = text;
+            effect.style.left = `${x}px`;
+            effect.style.top = `${y}px`;
+            
+            document.body.appendChild(effect);
+            
+            setTimeout(() => {
+                if (effect.parentNode) {
+                    effect.parentNode.removeChild(effect);
+                }
+            }, 1000);
+        }
+
+        // コンボ表示
+        function showCombo(comboCount) {
+            if (comboCount > 1) {
+                const comboEl = document.createElement('div');
+                comboEl.className = 'combo';
+                comboEl.textContent = `COMBO x${comboCount}!`;
+                
+                document.body.appendChild(comboEl);
+                
+                setTimeout(() => {
+                    if (comboEl.parentNode) {
+                        comboEl.parentNode.removeChild(comboEl);
+                    }
+                }, 2000);
+            }
+        }
+
+        // ゲーム開始
+        function startGame() {
+            // 皿を定期的に生成
+            setInterval(createPlate, 1500);
+        }
+
+        // ページ読み込み完了後にゲームデータをロードしてゲーム開始
+        window.onload = loadGameData;
+    </script>
+</body>
+</html>
