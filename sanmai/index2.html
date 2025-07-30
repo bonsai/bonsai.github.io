@@ -263,7 +263,7 @@
                 audioData.forEach(item => {
                     fishKanji.push(item["漢字"]);
                     // 音声ファイルをプリロードし、Audioオブジェクトとして保存
-                    const audio = new Audio(`audio_output/${item["MP3ファイル"]}`);
+                    const audio = new Audio(`audio/${item["MP3ファイル"]}`);
                     // 大きな声にするために音量を少し上げる
                     audio.volume = 1.5; // 標準が1.0なので、1.5にすると少し大きくなる
                     audioMap[item["漢字"]] = audio;
