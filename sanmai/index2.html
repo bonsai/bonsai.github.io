@@ -204,7 +204,7 @@
         @media (max-width: 768px) {
             .title { font-size: 1.5em; }
             .score { font-size: 1.2em; }
-            .plate { width: 60px; height: 60px; font-size: 1.5em; }
+            .plate { width: 60px; height: 60px; font-size: em; }
             .slot { width: 80px; height: 80px; font-size: 2em; }
             .player-table { width: 150px; padding: 15px; }
         }
@@ -265,7 +265,7 @@
                     // 音声ファイルをプリロードし、Audioオブジェクトとして保存
                     const audio = new Audio(`audio/${item["MP3ファイル"]}`);
                     // 大きな声にするために音量を少し上げる
-                    audio.volume = 1.5; // 標準が1.0なので、1.5にすると少し大きくなる
+                    audio.volume = 1.0; // 標準が1.0なので、1.5にすると少し大きくなる
                     audioMap[item["漢字"]] = audio;
                 });
                 console.log('ゲームデータと音声ファイルを読み込みました。');
