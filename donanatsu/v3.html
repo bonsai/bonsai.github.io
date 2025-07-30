@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ぶどうキャッチゲーム</title>
+    <style>
+        /* CSSは変更なし */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #girlCanvas { /* #girl から #girlCanvas に変更 */
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 160px;
+            z-index: 10;
+            transition: left 0.1s ease;
+        }
+
+        .jumping {
+            bottom: 150px !important;
+        }
+
+        .grape {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            z-index: 5;
+            animation: fall linear;
+        }
+
+        .juice-drop {
+            position: absolute;
+            width: 60px;
+            height: 80px;
+            z-index: 5;
+            animation: fall linear;
+        }
+
+        @keyframes fall {
+            from {
+                top: -80px;
+            }
+            to {
+                top: 100vh;
+            }
+        }
+
+        #juice {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 100px;
+            height: 120px;
+            z-index: 15;
+        }
+
+        #ui {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            font-size: 24px;
+            font-weight: bold;
+            z-index: 20;
+        }
+
+        #healthBar {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 30px;
+            background: rgba(255,255,255,0.3);
+            border: 3px solid white;
+            border-radius: 15px;
+            overflow: hidden;
+            z-index: 20;
+        }
+
+        #healthFill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #ffa500, #32cd32);
+            border-radius: 12px;
+            transition: width 0.3s ease;
+            width: 100%;
+        }
+
+        #grapeCounter {
+            position: absolute;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            z-index: 20;
+        }
+
+        .floating-text {
+            position: absolute;
+            color: #FFD700;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+            z-index: 25;
+            animation: floatUp 1s ease-out forwards;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+        }
+
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #startScreen h1 {
+            color: white;
+            font-size: 48px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+            margin-bottom: 30px;
+        }
+
+        #startButton {
+            background: linear-gradient(45deg, #ff6b6b, #ffa500);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+
+        #startButton:hover {
+            transform: scale(1.1);
+        }
+
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+            opacity: 0.8;
+            animation: drift 20s linear infinite;
+        }
+
+        .cloud:before {
+            content: '';
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+        }
+
+        .cloud1 {
+            width: 100px;
+            height: 40px;
+            top: 20%;
+            animation-duration: 25s;
+        }
+
+        .cloud1:before {
+            width: 50px;
+            height: 40px;
+            top: -20px;
+            left: 10px;
+        }
+
+        .cloud2 {
+            width: 80px;
+            height: 30px;
+            top: 40%;
+            animation-duration: 30s;
+            animation-delay: -10s;
+        }
+
+        .cloud2:before {
+            width: 40px;
+            height: 30px;
+            top: -15px;
+            left: 15px;
+        }
+
+        @keyframes drift {
+            from {
+                left: -120px;
+            }
+            to {
+                left: 100vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div class="cloud cloud1"></div>
+        <div class="cloud cloud2"></div>
+
+        <div id="startScreen">
+            <h1>🍇 ぶどうキャッチゲーム 🍇</h1>
+            <p style="color: white; font-size: 20px; margin-bottom: 30px; text-align: center; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
+                ぶどうを11個あつめて<br>ジュースを飲もう！
+            </p>
+            <button id="startButton" onclick="startGame()">ゲームスタート！</button>
+        </div>
+
+        <canvas id="juiceCanvas" width="100" height="120" style="position: absolute; top: 20px; left: 20px; z-index: 15;"></canvas>
+        
+        <div id="ui">
+            <div>スコア: <span id="score">0</span></div>
+        </div>
+
+        <div id="healthBar">
+            <div id="healthFill"></div>
+        </div>
+
+        <div id="grapeCounter">
+            ぶどう: <span id="grapeCount">0</span> / 11
+        </div>
+
+        <canvas id="girlCanvas" width="120" height="160"></canvas>
+    </div>
+
+    <script>
+        let gameState = {
+            isPlaying: false,
+            score: 0,
+            health: 100,
+            grapeCount: 0,
+            girlX: window.innerWidth / 2,
+            grapes: [],
+            grapeSpeed: 2,
+            spawnRate: 0.02
+        };
+
+        // キャンバス設定
+        const girlCanvas = document.getElementById('girlCanvas');
+        const girlCtx = girlCanvas.getContext('2d');
+        const juiceCanvas = document.getElementById('juiceCanvas');
+        const juiceCtx = juiceCanvas.getContext('2d');
+
+        // ▼▼▼ 【変更点2】女の子の画像を読み込む処理を追加 ▼▼▼
+        const girlImage = new Image();
+        girlImage.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAACoCAYAAAAoYD9rAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAfWSURBVHic7Z1diBxVFsd/VT09PT2dSTKZJJPJZGKSyWQyH5lkMplMJpPJZDKZTCaTyWQymUwmk8lkMplMJpPJZDKZTCaTyWQymUwmk8lkMplMJpPJZDKZTCaTyWQymUwmk8lkMplMJpPJZDKZTCaTyWQymUwmk8lkMplMJpPJZDKZTCaTyWQymUwmk8lkMplMJpPJZDKZTCaTyWQymUwmk8lkMplMJpPJZDKZTCaTyWQymUwmk8lkMplMJpPJZDKZTCaTyWQymUwmk8lkMplMJpPJZDKZTCaTyWQymUwmk8lkMplMJpPJZDKZTCaTyWQymUwmk8lkMplMJpPJZDKZTCaTyWQymUwmk8lkMplMJpPJZDKZTCaTyWQymUwmk8lkMplMJpPJZDKZTCaTyWQymUwmk8k/xTHvwBhHRGRmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZm-iJGUmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZm-gla.png";
+        
+        let isGirlImageLoaded = false;
+        girlImage.onload = () => {
+            isGirlImage-loaded = true;
+            drawGirl(); // 画像読み込み完了時に初回描画
+        };
+
+        // ▼▼▼ 【変更点3】女の子を描画する関数を画像描画に変更 ▼▼▼
+        function drawGirl() {
+            girlCtx.clearRect(0, 0, girlCanvas.width, girlCanvas.height);
+            if (isGirlImageLoaded) {
+                // 画像をcanvasに描画します
+                girlCtx.drawImage(girlImage, 0, 0, girlCanvas.width, girlCanvas.height);
+            }
+        }
+        
+        function drawJuice() {
+            juiceCtx.clearRect(0, 0, 100, 120);
+            
+            // グラス
+            juiceCtx.strokeStyle = 'black';
+            juiceCtx.lineWidth = 3;
+            juiceCtx.beginPath();
+            juiceCtx.roundRect(20, 20, 60, 80, 5);
+            juiceCtx.stroke();
+            
+            // ジュース
+            const fillHeight = Math.min(70, (gameState.grapeCount / 11) * 70);
+            if (fillHeight > 0) {
+                juiceCtx.fillStyle = '#8A2BE2';
+                juiceCtx.beginPath();
+                juiceCtx.roundRect(23, 97 - fillHeight, 54, fillHeight, 3);
+                juiceCtx.fill();
+                
+                // 泡
+                if (fillHeight > 10) {
+                    juiceCtx.fillStyle = 'rgba(255,255,255,0.7)';
+                    for (let i = 0; i < 5; i++) {
+                        const x = 30 + Math.random() * 40;
+                        const y = 90 - fillHeight + Math.random() * (fillHeight - 10);
+                        juiceCtx.beginPath();
+                        juiceCtx.arc(x, y, 2, 0, Math.PI * 2);
+                        juiceCtx.fill();
+                    }
+                }
+            }
+        }
+
+        function createGrape() {
+            const grape = document.createElement('div');
+            grape.className = 'grape';
+            grape.style.left = Math.random() * (window.innerWidth - 80) + 'px';
+            grape.style.animationDuration = (3 + Math.random() * 2) + 's';
+            
+            // ぶどうを描画
+            const canvas = document.createElement('canvas');
+            canvas.width = 80;
+            canvas.height = 80;
+            const ctx = canvas.getContext('2d');
+            
+            // ぶどうの房
+            ctx.fillStyle = '#8A2BE2';
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 4 - i; j++) {
+                    ctx.beginPath();
+                    ctx.arc(20 + j * 15 + i * 7, 25 + i * 12, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            // 茎
+            ctx.strokeStyle = '#228B22';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(40, 10);
+            ctx.lineTo(40, 25);
+            ctx.stroke();
+            
+            grape.appendChild(canvas);
+            document.getElementById('gameContainer').appendChild(grape);
+            
+            // アニメーション終了時の処理
+            grape.addEventListener('animationend', () => {
+                if (grape.parentNode) { // 既にキャッチされていなければ
+                    grape.remove();
+                    gameState.health -= 5;
+                    updateHealth();
+                }
+            });
+            
+            return grape;
+        }
+
+        function checkCollision(grape) {
+            const grapeRect = grape.getBoundingClientRect();
+            const girlRect = girlCanvas.getBoundingClientRect();
+            
+            return (grapeRect.left < girlRect.right &&
+                    grapeRect.right > girlRect.left &&
+                    grapeRect.top < girlRect.bottom &&
+                    grapeRect.bottom > girlRect.top);
+        }
+
+        function catchGrape(grape) {
+            grape.remove();
+            gameState.grapeCount++;
+            gameState.score += 10;
+            
+            // フローティングテキスト
+            showFloatingText('+10', gameState.girlX, window.innerHeight - 100);
+            
+            updateUI();
+            
+            if (gameState.grapeCount >= 11) {
+                drinkJuice();
+            }
+        }
+
+        function drinkJuice() {
+            gameState.health = Math.min(100, gameState.health + 30);
+            gameState.grapeCount = 0;
+            gameState.score += 50;
+            
+            showFloatingText('ジュース完成！ +50', gameState.girlX, window.innerHeight - 150);
+            updateUI();
+            updateHealth();
+        }
+
+        function showFloatingText(text, x, y) {
+            const element = document.createElement('div');
+            element.className = 'floating-text';
+            element.textContent = text;
+            element.style.left = x + 'px';
+            element.style.top = y + 'px';
+            document.getElementById('gameContainer').appendChild(element);
+            
+            setTimeout(() => element.remove(), 1000);
+        }
+
+        function updateUI() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('grapeCount').textContent = gameState.grapeCount;
+            drawJuice();
+        }
+
+        function updateHealth() {
+            const healthPercent = Math.max(0, gameState.health / 100 * 100);
+            document.getElementById('healthFill').style.width = healthPercent + '%';
+            
+            if (gameState.health <= 0) {
+                gameOver();
+            }
+        }
+
+        function gameOver() {
+            gameState.isPlaying = false;
+            alert(`ゲームオーバー！\nスコア: ${gameState.score}`);
+            location.reload();
+        }
+
+        function startGame() {
+            // ▼▼▼ 【変更点4】画像の読み込みが完了してからゲームを開始する ▼▼▼
+            if (!isGirlImageLoaded) {
+                alert("画像の読み込み中です。もう一度スタートボタンを押してください。");
+                return;
+            }
+            document.getElementById('startScreen').style.display = 'none';
+            gameState.isPlaying = true;
+            drawJuice();
+            gameLoop();
+        }
+
+        function gameLoop() {
+            if (!gameState.isPlaying) return;
+            
+            // ぶどうを生成
+            if (Math.random() < gameState.spawnRate) {
+                createGrape();
+            }
+            
+            // 衝突判定
+            const grapes = document.querySelectorAll('.grape');
+            grapes.forEach(grape => {
+                if (checkCollision(grape)) {
+                    catchGrape(grape);
+                }
+            });
+            
+            // 時間経過でヘルスが減少
+            if (Math.random() < 0.01) {
+                gameState.health -= 1;
+                updateHealth();
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // タッチ・マウス操作
+        function handleMove(clientX) {
+            if (!gameState.isPlaying) return;
+            
+            const girlWidth = girlCanvas.width;
+            gameState.girlX = Math.max(girlWidth / 2, Math.min(window.innerWidth - (girlWidth / 2), clientX));
+            girlCanvas.style.left = gameState.girlX + 'px';
+        }
+
+        // イベントリスナー
+        document.addEventListener('mousemove', (e) => handleMove(e.clientX));
+        document.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            handleMove(e.touches[0].clientX);
+        }, { passive: false });
+
+        // 初期化
+        updateUI();
+        updateHealth();
+    </script>
+</body>
+</html>
