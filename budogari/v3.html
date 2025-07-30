@@ -264,244 +264,245 @@
 
         <canvas id="girlCanvas" width="120" height="160"></canvas>
     </div>
+<script>
+    let gameState = {
+        isPlaying: false,
+        score: 0,
+        health: 100,
+        grapeCount: 0,
+        girlX: window.innerWidth / 2,
+        grapes: [],
+        grapeSpeed: 2,
+        spawnRate: 0.02
+    };
 
-    <script>
-        let gameState = {
-            isPlaying: false,
-            score: 0,
-            health: 100,
-            grapeCount: 0,
-            girlX: window.innerWidth / 2,
-            grapes: [],
-            grapeSpeed: 2,
-            spawnRate: 0.02
-        };
+    // キャンバス設定
+    const girlCanvas = document.getElementById('girlCanvas');
+    const girlCtx = girlCanvas.getContext('2d');
+    const juiceCanvas = document.getElementById('juiceCanvas');
+    const juiceCtx = juiceCanvas.getContext('2d');
 
-        // キャンバス設定
-        const girlCanvas = document.getElementById('girlCanvas');
-        const girlCtx = girlCanvas.getContext('2d');
-        const juiceCanvas = document.getElementById('juiceCanvas');
-        const juiceCtx = juiceCanvas.getContext('2d');
+    const girlImage = new Image();
+    // この部分はあなたの画像データなので、このままでOKです
+    girlImage.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA2gAAAOYCAYAAADCI0g7AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAFlTSURBVHhe7d15mB1Vnf/x3ySgqAAiKCIi7rgLutZdd119r7v21LqudXXvu+4yqGsiLrjuiAgqKCCIiCSIBPK9P7MzmUmSmSSZyT0/n/d5v/mSM0/uSSbJvGfmvM+5DMMwRERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERER-9V0f/8u0sWqF6O//j2/M/vT2lW+Vv929vX+5/u/f0P/6O6y/MvvP9z+Xv4H/e/4v/T++7v/wP/796t//H/x49/+yP//yD93+s7/v///n3/7P/9H/9//vP97/+3f//8u/v/vH//v+1/9v/gLwT6h///m//w/+f+3v+1+9f/nf+f/L//mH7v+8/5d//e+Xv/uP//9lH9iL/+6ff/8v8P/2v/8H+P9r/9/+A/7/+z/+L/z/+1//P9//s//4H0j+f/m3P/i/4v/b/+D//3+/+l//Y8m/eN8F/+5/8+D/6P93/f+w9z//F9q/v/67f/0/+r/7/w38e/v/6v+9/j/+BwP/sP/mP1i+f/7P+L/7/1/zPwD2H/wP+n9y/v/L9n/zHyj/Qf1/6P+7n/9p/qP5H/X/s//s/z/i/6//n/7/Bv8n//8a+L/9/+q/v//X/9r+73D+b6H/d//+9P/n/8P/l//r9n9xP5z8X/k/8v/s/4T/1f/n/zf/p/8v/xf+/wP/X/4H/D/3//l/Av9v/6v636P/v/2//d/x/v7f7/8t/pL2//+D/lf/f/F/6/8H+Zf9/8X+f/Bv63+1/63/A/7/+n/zP/C/4//d//x8//73+7/79zT59f3v8D/t/6T/0H/S/xf/Q/2P//0D/X/u/4P+m/+v/zP6z+D+b/5/wP8//R/+f/x/4/6P+l/1/+r/j/8//0/yv+l/3/yP7D/jP8/+b//8D/X/z/9/+H+l/+p/l/q/1P+f+q/oP/1f0f+7/d/v/9f+b/m/9n/y/8v/6f/Bf+f9n/A/1/+f/T/rP9f/j/4/+n/D/4H/V/+X/6n+X8P/8P+L/sH+L//X+P+H/sH+P/6//L/n//P/L/6n+P/8P/4P/D/1n+P/2v/V/0f+z/m/0v+V/+//D//n/G//P/l//x/X/zP4P/Qf2f/3v8/6b/Q/9//b/6/03+1/3/x/8N/lf+j/m/6//T/+P/2v53+n/P/43/d/j/4P9b/x/9z/1/6P/m/x/+t/ufzP+n+f/A/wH/J/z/7X/u/wL/Z/1v+x/y/+j/6v/h/+l/5f+T/+v+L/j/6X/j/4f8H/9f8/+F/+P/x/9r9f+r/2v4v+P/p/yf9b/n/yf+d/v8k/5P9D/nf4X+R/0f+n/rf7P9L/nf5n+L/h/5P/H/b/+f/1//z/zv+b/T/1/+5/pP8H/Q/+X/L/3n+5/+j/3/8v/e/6/+X/n/6P/p/xf/n+3+t/0/6n+F/lP+D/uP+L//H+P+j/g/83+f/J//39/+F//P9X/9H4f/B/+j/g/9P/h/9v/B/xf+v/u//R/6P+D/tP8b/j/5/+d/mfyf/d/z/+f/A//P/v/4f/P/6f+d/uf5v/X/yv4v/S/1v+d/if5P+B/3/8v+f/u/+/8X/r/43+L/T/6n+P/h//X/5f8//T/j/5/+v/j/yv63/N/p/9r+B/y/+D/j/+n/o/8f9v/D/3//t//h/z/+X//P/j/5//Z/2v+B/0f/7/k/4P/N/g/9n/Z//v/7/p/1v9r+b/2v4H+5/h/0/8J/2/73/V/gP8f/D/4P+v/8//m/wP/Z/xf9r+s/4f+j/jf6f+p/3f8H/p/5f+T/o/6f+v/4/6P8j+b/j/8//G/w/4f+1/xf8b/L/x/4P/G/rP53+5/s/6v/F/j/1v+F/w/9v+3/2f+D/8v+d/tf9v/W/1/5v+v/3/9r+d/o/9r+p/k/8v/s/4P/r//H/F/+r+v/hf7v9n/J/5P+f/I/o/9f+5/s/3/9//f/N/v/u//H/X/0H/N/rf+X/L/qP+7/q/2v+D/2f+z/4/+f/r/+f/x/1/+L/s//P+n/Tf5/5v+b/N/j/9n+d/tf8L/j/8f+d/hf5X/h/7H+9/t/2//d/8v/D/z/8/+v/u/+X+D/qf+D/w/8H/h//3/4//k/4/+P/d/0P/f/D/wP8P/T/rf6P/B/+v+r/i/1f6P+l//8k/wv+H/u/+T/uf/P+D/7P/3/j/8f+7/4v/b/5f9r/if8n/J/yf+f9r/q/4f/3/gf7P/J/0/6n+H/i/5H+l/+P/f/k/+X/m/5v+z/rf6P9n/T/hf6H/l/4P/f/qf6T/j/5v+z/B/+/9r/y/2/8D/d//u/0v8X+j/3/4H/l/9//n/v/wP97/x/4H+f/0H97/r/9n/7/z/7H/R//v9X+b/o/739H/y/8v9L/S/z/0f/f/0n87/R/xf9b/9/9H/h/y/5H/f/z/1v8v8b/R/6v/H/w/9D/H/3/6X9H/7P/l/7f+L/xf9L+d/gf6v9P+j/n/9D/pf4f+x/jf7f+P/kf5/+H/g/7/+j/mf8n/p/+P+t/n/8P8f+l/j//P/L/+n+3/m/xf/1/5v/5/4v/T/m/yv63/F/q/+D/Q/7f8n+n/0v9L/5v+j/x/9H/T/4/7X/y/+D/z/8f8X/r/5P+f+f/u/+L/v//P+3/D/9/+t/n/1f/n/z//P8h/+T/y/6f/B/+/5D/y//d//P+z/x/+D/j/+X/pf/f+P/L/h//X9b/7/9f/p//P+7/wP9f/l/j//X+f/b//f8X/b/7/9f/xf8v/L/8v+j/8f8v+d/nf5P/G/r/y/4f+j//f+f/mf5n93/w/8/+r/kf8H+z/jf6X+b/b/4v9X+l/mf7P9f/R/+f+3/l/0v8b/n/yv+H/p/+X+L/o/yP/h/8f+f/B/7v/d//v+n/3f83+v/5P+n/w//n/1/9H/z/w/5v9j/v/x/4v/d//P+7/rf9f9L/2f7P/h/zP+H/pf+H/7v7n+9/j/wv8X/6//Z/0f9v+T/y/7P+j/hf5n+j/7f/P+p//P+n/xf9b/R//v+3/n/yv8P/2v4v+9/j/+n/g//H+n/R/+v+3/9/5f/z/v/g/83/B/zf4X/X/wP8H/b/6/+3/6/53/3/pP8H/T/yf4v+l/mf7n9j/gf+P+x/n/wP/d/g/9v+3/l/tfw3/8n/h/5P+j/hf6v/S/7/+n/N/x/93/N/i/wP93/L/tfw3+T//f+P+h/xf6P/X/w/+//r/3/8D/P/q/+D/5P+z/of83/y/xv8H/n/3/6v+B/t/2//F/r/5f+T/m/+H/o/+f+X+7/pf4v+R/l/8v/P/y/8v+j/7v+b/+/+r/wf9r/n/4f+X/S/rv9b/m/1/4L/Q/+//H/h/yv8v/7/5f/n+j/6v9b/Z/y//5/wf+L/lf/P/N/gP+P+T/k/xf9n/m/+n/rP+n/m/9P+P/z/wv+f/t/0f8L/H//X/7/+n/H/tf+D/X/+v9f+r/2//P+7/d/j/2//P/jf7P+P/tf83+t/gf6X/l/g/5v9v/B//H+r/0f+n/rf8H/g//p//P+n/xf7H9B/+f8v/X/p/wP9z/9/0//v/B/4/6P/L/yf8n+T/g/+T/9/+r/6f+d/jf+v/B/2P83+p/jf6P+D/t/9/+7/yv9b/t/5v+v+n/L/z/9/+z/r/wP9f+7/wP9D/4v9X/J/2P+n/4/+H/L/x/6/+l/h/wf53+D/xf6X+D/p/8H/G/v/y/4f/l/zv+b/8P+F/gf7P+b/R/6v+d/jf8f9L/pf+v9/+T/7P9b/Z/xv9n/w/7X9B/jf3v/3/n/z/4v9b/f/2/9X+P/b/4v8H/2//f/V//P+z/r/6v/h/+v+P/rP6H+T/r/8H/a//P+D/u/+//hf5/8L/r/4/+z/hP839b/d/mf8P+R/z/9D/g/+T/n/w/+r/pf+D/2//f/B/9/+x/7/+T/5f4v+r//f/n/r/8v+P/r/3/+P/7v/D/j/8//Z/2v+r/i//n/R/x/93+d//f9v/2//d/x/9r+B/0/+L/3f+P/N/v/6v+1//P9H/v/2v7v+x/y/+j/6v+b/N/j//v+3/l/0P8X/u/y/8v9L/S/z/0f/b/lf8X+l/t/wv+L/Q/7f9D/S/z/x/+f+n/m/3P9v+B/pf9f+r//P+j/Q/9P+v/pf/f+N/l/9n/yv+7/gP/b/tf2v+z/rf6P+3/X/7/+X+H/V/2f8v8b/T/k//f8H/9v+3/rf1//h/9/+L/pfyP+v/7/7f8f8P/X/w//v/3/2v9H/pf63/b/yf+v/6//l/if8P9b/9/9//R//P+X/F/v/wf9P+j/yf6P+D/9v9r+Z/6P+7/T/rf6H+D/hf4P+L/n/w/8H/L/uf/P+D/7P+P/9/+//d/yP+n/y/8n+l/tf5v9v/Z/+f6v+H/p/+P+t/of9f/L/vP9H+9/l/1f9b/h/4v/b/tf3/+z/q/8f8v9n/P/4/8n+B//v93/T/0f+z/6/5f+Z/D//v/G/g/+v/hf7v+n+3/m/63/A/5P/l/z/6/+n/+/+P/qf4H/n/2P8L/Z//f/H/pP9P/j/+X/a/lP9H/F/8v8P8H/R//v9X+b/2//3/j/8f8v/S/1/5v+x/y/8/+H+l/h/y/4f+j//f8n+n/h/9v/D/7/+z/8P9H/f/z/tf+v+3/B/v/o/+7/b/5v+v/J/+X+L/o/5v+v/S/u/6//B/yf9v+T/qf6X8t/pf7f6T/j/zv9n+x/+/+X/r/4n+Z/9/+n/5v+H+r/2/+n/2f9H/B/6v9b/D/rP6/+t/pP/J/+f9P8N//9P9n/q/7P+H/a/rv9b/y/9v83/S/9//P/g/5v8H/L/kf+T/N/i/8P+v/1//n/i/xf+n/W/+H+T/hf4f+r/2/+H/T/u/0P+n/m/xv8n/B/6f/B/z/7P/B/y/+7+t/r/2P+n/rf7P+D/yf+7/xf4H/l/2v+X/P/2v+B/q/+D/jf4v9b/Z/w/+P/v/2v8L/T/p/9n/B/9n/z/8n/q/+T/p/53+x/w/+7/6v9P+z/rP/V/q//P+H/pfw//H/z/6H/x/1/+b/V/mf4P8b/a/sP8H/n/y/2/8v/l/9v9n/H/n/+P8n/y/7H/R/8P/F/r/6v9b/L/x/6f+v+p/g/9v+T/S/+f+T/g/8f+l/j//P/L/0/+/+b/p/8H/p//f9H/f/r/4v8H/f/p/wP/R//v+3/L/yf/B//P/F/tP+j/g/6v9n/Z/rf5P8b/q/4v+b/N/v/6v+B//f8v+t/h/1v+z/B//f/B/+f+X+n/7v/T/m/9H/t/xf+D/lf+L/B/+v+N/v/2f/B/8f/X/m/5/9L/d/+P+T/R/5/+P+T/h/+//T/3f+P8n//8f//8H/i/5H+l/8/+v/u/+X/pf53/H/q/xf+v+R/9//X/1/+p/hf+f9/+v/4v/b/x/9z/1//T/w/6P/b/y/7X/l/g/+n/Q/+//J/l/wv9f/F//f/l/2f+n+P/wf+v/W/rv97/7/yf/l/tfyv9H/j/5H/3/6v9n+9/z/yv+n+3/lf+/+T/pP+j/g//P+3/n/yv+r/N/m/2/8v9L/X/m/xf/1/5v/x//v+H/S//P8b/gP+P/z/7f+z/m/0v+L/m/yf/n/w/+r/1/6/+H/T/4P+L/7/+b/4v9n/y/8n+n/j/5P+R//f9f+H/7f9n/N/g/9v+x/m/0v+P/t/xf/b+r/wf9L/x/4P+T/+/+X/r/4H/l/0/8P/g//P+t/2/+/+D/wP8//R/m/8n+j/6f+d/i/1//B/6/8H+x/6/+l/tfw3/1/6f+t/6/8H/N/xf/B/7P/9/4f/f/i/+v+z/rf9H+b/m/93/z/2P/3/l/zv+b/pP+v+n/wf+7/r/yf+b/n/yf+b/y/+b/J/8v8P8H/R/1v+P/n/yv63/L/i/wP9n/9/7X/V/n/9/+j/9/+b/5/wP8X/V/u/4v+f/n/wv+b/N/i//v+z/if+X+L/8v+R/8v/P/u//f+b/Q/+//S/rP+j/g//P/n/8n/m/+D/j/zv9n/R/0//D/r/y/+n/D/4P+f/h/8P/e/pf2v8X+z/h/9v/3/8v/L//X/3/4v+j/0//p/4/+b/y/8v97/r/m/6//1/4v87/x/+b/P/6v/h/6H/B/z/7P/3/pP+3/B/wP9X+j/+/5X8L/2f/b/2f9D/y//N//H+j//f9P+x/xf8X/Q//P/if5n87/J//f/N/+H/N//f+z/2f6v/n/q/4H+f/D/4P+H/4/+T/wf/L/4//b/mf1v8v/R//P8b/r/8H/h/yv8//j/w/7X/1/4v+b/4/4X+H/L/6H/o/8X/P/q/+D/xf8H/l/wf8n/N/jf+X/r/xf+T/a/+P/Q/1/+j/v/2v8//i//n+D/l/yv+b/a/wP/f/p/3/+l/zf+//J/x/+X+l//8k/7/wP9//n/t/yf+H/F/+r+j/yf5v9f+r/2/+z/g/5v/B/4/+H/hf7/+r/Q/zP+X+H/z/+T/v/2/+n/hf+/+b/t/wf/T/x/+D/h/7f7P+p/zf/H/z/93/b/j/g/8f+L/g/+n/j/4/8b/P/q/2f/D/g/y/9/+n/vP/Z//v8b/D/m/7P+j/l/oP9n/Z/yf4v+r//f/j/5//v/rf5v+7/2f7P+H/o/+7/mf6v9n/J/5P8L/9//H/a/n/y/7P/Z/xv+j/N/x/6v/L/p/zP+j/wf8P/o//X/5/7/4n8P/P/oP4n/p/xf/l/2v+H/p/+n+T/N/hf+v8B/w/6P/l/u/+H/b/pfy3+t/1P+f/q/+D/S/+X/p/+b+l/hf4v+P/8H/r/q/73/D/kfzP+v/J/w/9v+H/o//n/B/9f/f+F/x/6/+P/pf4v+x/y/5v8H/y/yf/H+x/6v/H/w/+D/3P/J/h/+P/l/0/73+n/w//r/N/p/4v/b/s/+L/xf+n+t/xv7v9X+b/0/5P+X/F/+v9v/T/o/6f+d/g/+X/G/1/+P9/+L/X/p/xv6P/L/t/0/6n/d/j/2//r/wf/n/if8X/q/zP8//J/5P9D/n/+P/v/o/7P/F/r/zv+D/l/xv6P+L/o/yv8n+t/h/8P+L/x/6P+7/w/+f/u/+H/rfwv/L/0v6v+v+b/q/4X+7/p/xf9b/R/6v9b/l/w/+v/xf83+P/9//P/X//f+T/o/0/7P+T/a/zP+7/q/7H/L/l/+X/N/j/9n+p/5v+b/N/3P8D/9/0v6b/b/g/+f/j/0f+3/C/9P+r/t/1v6H/B/6/9P/7/wP/P/1/8X/u/y/8/+n/3//H/V/xv+n/R/+f/h/83/B//f9D/pfyP+v/pf8f+t/j/xf+b/J/+f93/1/6f+v/R/+f8D/S/l/yv4v/N/tf9/+N/hf4v9j/a/yv+l/mf7P9f/g//b/tP/n/hf7v+b/h/+P/o/+n/tfw3/8n+t/v/y/2//n/B/6v9j/p/+v/5v9j/pf4f/n/S/mP/F/4v/R/y/8v8P/F//P8D/y/+z/o/+n+x/5f+T/if8n/D/4P+3/n/yv+H/x/z/+H/+/9H/o/5f+7/j/5//Z/2v+L/l/+f/W/+v6v8X/t/8/+3/o/+n/q/+f/2/+n/2/+b/F/2f/3+l/0v8X/q/wv/R/+v+P/r/qf+n/rf8H/9/w/4f+v/R/if8H/R/4/+n/D//f9f+H/7f6v+H/g/7/+n+n/0//D/r/wf9L/y/+z/x/+D/v/w/wf/j/8/+T/g/5v9L/S/r/yP9//5/wv9L+x/zP/X/w/+H+l/1/8v+R/9/8L/t/w/8v/B/+v+x/y/+j/6v/h/6//l/w/+L/m/wP/d/n/x//P+x/n/w/+r+F//P/N/kf+f9v+n/wf/P/X/r/+/+r//P+j/g/6/+n/B/+v+P+r/xf9//H/R/z/9/+j/9/+D/p/4v/D/j/g/+D/g/7P/9/xP8n/o/8f+z/6/+n/N/g/9n/y/wf8X/m/zv9n/D//v/B/+v+p/o/+H+B/2/+n/r/6f+P+x/jf+j/mf0f8f/9/+D/n/rP+n+D/k/yv9X/J//f8v+P/t/8/7X/r/4/+z/w/93/b/j/g//P+t/gf/f+j/o//f+B/g//f+j/i//P/V/jf4f/x/+/8v9P/Z//f/B/+f+f/3/r/wP9b/d//f/3/+j+x/+T/o//v+N/v/z/6H9n/Z/2v9X/v/4X+H/R/wP8//R/m/8H/h/3f/B/r/6v/r/lf5v/z/wP+P/z/7P9P/h/7H+9/q/wf+j/xf6P+H/g//H+n/5v+v+v/p/wf9H/l//P+x/if+H/J/if+n/xf9r+H/j/g/6v9b+D/8v+L/m/6f+x/mf6v/Z/w/+//v/g/z/+D/wf+T/o//v+V/B/zf8f/S/rf/H/B/+v/a/gf/X/l/xv9v+b/W/rP9D/S/yf9D/d/6v+9/g/0//l/yf+n/i/+v+L/pf4P/d/hf93/Z/xf9r+j/2f6v/N/gP+H/pf+v/j/hP93+b/i/wf+v/W/rv97/j/y/8v/Z//v/7/5f8v/n/5f6X9L/j/6/+P+b//f8f+v/B/9/+f8D/S/zv9D/L/p//v+9/1/4/+P/x/8P/R/+P+9/jf8//L/if8P/L/q/8f/T/x/9X/B/2f9H+b/i/wv9L+D/0/+f9b/h/8P/7//v/h/x/+X+l/h/1v/T/8f/S/9f8X+P/b/0/+P+7/+f+f/y/4f+j/+/8v+9/lf0//h/z/+L/k/9//B/hf5f9L+L/9/+v/o/7f/P+j/if/P+L/vP+H/y/+b/m/9//H/l/4v9n/y/zf/H/g/8f+f/m/7P+j/9f/P8l/1//f/n/5//H/R/+v/H/p//v+x/y/wf9r+9/mfyf8//f/6//5/q/+T/6//p/zv9/+r//P+j/gf+v/f/hf8X/F/+P9n/T/i/4v/b/tfyv4X+D/q/xv9L/t/0/6n+D//P9n+j/6/+7/h/2f+z/tf+v+9/3v9H/t/rf5f9D/F//P8v/i//f8b/1/zv9D/q/939L+b/6/6f6T/j/5//v+z/rf4v/v/y/5X+n/T/hf93/l/6f8H/N/j/9n+p/xf63+3/g//n/B/7v9n+Z//f8//l/zf+v+f/gf9v+r/if+H+t/xP+H/N/3f9n+r/w/7P+z/m/wf9H/Z/+P/A/h/7X/P/2f7P/D/rf9v/f/l/2v8v+L/t//f+L/xf9L+R/x/+D/q/zP8n/F/7v/l/+f/n/wv+L/6f+v/J/lf5//J/p/9f9P9J/5v/x//v/r/5H+l/tf5";
+    
+    let isGirlImageLoaded = false;
+    girlImage.onload = () => {
+        // ▼▼▼ ここを修正しました ▼▼▼
+        isGirlImageLoaded = true;
+        drawGirl(); // 画像読み込み完了時に初回描画
+    };
 
-        // ▼▼▼ 【変更点2】女の子の画像を読み込む処理を追加 ▼▼▼
-        const girlImage = new Image();
-        girlImage.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA2gAAAOYCAYAAADCI0g7AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAFlTSURBVHhe7d15mB1Vnf/x3ySgqAAiKCIi7rgLutZdd119r7v21LqudXXvu+4yqGsiLrjuiAgqKCCIiCSIBPK9P7MzmUmSmSSZyT0/n/d5v/mSM0/uSSbJvGfmvM+5DMMwRERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERER-9V0f/8u0sWqF6O//j2/M/vT2lW+Vv929vX+5/u/f0P/6O6y/MvvP9z+Xv4H/e/4v/T++7v/wP/796t//H/x49/+yP//yD93+s7/v///n3/7P/9H/9//vP97/+3f//8u/v/vH//v+1/9v/gLwT6h///m//w/+f+3v+1+9f/nf+f/L//mH7v+8/5d//e+Xv/uP//9lH9iL/+6ff/8v8P/2v/8H+P9r/9/+A/7/+z/+L/z/+1//P9//s//4H0j+f/m3P/i/4v/b/+D//3+/+l//Y8m/eN8F/+5/8+D/6P93/f+w9z//F9q/v/67f/0/+r/7/w38e/v/6v+9/j/+BwP/sP/mP1i+f/7P+L/7/1/zPwD2H/wP+n9y/v/L9n/zHyj/Qf1/6P+7n/9p/qP5H/X/s//s/z/i/6//n/7/Bv8n//8a+L/9/+q/v//X/9r+73D+b6H/d//+9P/n/8P/l//r9n9xP5z8X/k/8v/s/4T/1f/n/zf/p/8v/xf+/wP/X/4H/D/3//l"
-        
-        let isGirlImageLoaded = false;
-        girlImage.onload = () => {
-            isGirlImageloaded = true;
-            drawGirl(); // 画像読み込み完了時に初回描画
-        };
-
-        // ▼▼▼ 【変更点3】女の子を描画する関数を画像描画に変更 ▼▼▼
-        function drawGirl() {
-            girlCtx.clearRect(0, 0, girlCanvas.width, girlCanvas.height);
-            if (isGirlImageLoaded) {
-                // 画像をcanvasに描画します
-                girlCtx.drawImage(girlImage, 0, 0, girlCanvas.width, girlCanvas.height);
-            }
+    // 女の子を描画する関数
+    function drawGirl() {
+        girlCtx.clearRect(0, 0, girlCanvas.width, girlCanvas.height);
+        if (isGirlImageLoaded) {
+            // 画像をcanvasに描画します
+            girlCtx.drawImage(girlImage, 0, 0, girlCanvas.width, girlCanvas.height);
         }
+    }
+    
+    function drawJuice() {
+        juiceCtx.clearRect(0, 0, 100, 120);
         
-        function drawJuice() {
-            juiceCtx.clearRect(0, 0, 100, 120);
-            
-            // グラス
-            juiceCtx.strokeStyle = 'black';
-            juiceCtx.lineWidth = 3;
+        // グラス
+        juiceCtx.strokeStyle = 'black';
+        juiceCtx.lineWidth = 3;
+        juiceCtx.beginPath();
+        juiceCtx.roundRect(20, 20, 60, 80, 5);
+        juiceCtx.stroke();
+        
+        // ジュース
+        const fillHeight = Math.min(70, (gameState.grapeCount / 11) * 70);
+        if (fillHeight > 0) {
+            juiceCtx.fillStyle = '#8A2BE2';
             juiceCtx.beginPath();
-            juiceCtx.roundRect(20, 20, 60, 80, 5);
-            juiceCtx.stroke();
+            juiceCtx.roundRect(23, 97 - fillHeight, 54, fillHeight, 3);
+            juiceCtx.fill();
             
-            // ジュース
-            const fillHeight = Math.min(70, (gameState.grapeCount / 11) * 70);
-            if (fillHeight > 0) {
-                juiceCtx.fillStyle = '#8A2BE2';
-                juiceCtx.beginPath();
-                juiceCtx.roundRect(23, 97 - fillHeight, 54, fillHeight, 3);
-                juiceCtx.fill();
-                
-                // 泡
-                if (fillHeight > 10) {
-                    juiceCtx.fillStyle = 'rgba(255,255,255,0.7)';
-                    for (let i = 0; i < 5; i++) {
-                        const x = 30 + Math.random() * 40;
-                        const y = 90 - fillHeight + Math.random() * (fillHeight - 10);
-                        juiceCtx.beginPath();
-                        juiceCtx.arc(x, y, 2, 0, Math.PI * 2);
-                        juiceCtx.fill();
-                    }
+            // 泡
+            if (fillHeight > 10) {
+                juiceCtx.fillStyle = 'rgba(255,255,255,0.7)';
+                for (let i = 0; i < 5; i++) {
+                    const x = 30 + Math.random() * 40;
+                    const y = 90 - fillHeight + Math.random() * (fillHeight - 10);
+                    juiceCtx.beginPath();
+                    juiceCtx.arc(x, y, 2, 0, Math.PI * 2);
+                    juiceCtx.fill();
                 }
             }
         }
+    }
 
-        function createGrape() {
-            const grape = document.createElement('div');
-            grape.className = 'grape';
-            grape.style.left = Math.random() * (window.innerWidth - 80) + 'px';
-            grape.style.animationDuration = (3 + Math.random() * 2) + 's';
-            
-            // ぶどうを描画
-            const canvas = document.createElement('canvas');
-            canvas.width = 80;
-            canvas.height = 80;
-            const ctx = canvas.getContext('2d');
-            
-            // ぶどうの房
-            ctx.fillStyle = '#8A2BE2';
-            for (let i = 0; i < 3; i++) {
-                for (let j = 0; j < 4 - i; j++) {
-                    ctx.beginPath();
-                    ctx.arc(20 + j * 15 + i * 7, 25 + i * 12, 8, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
-            
-            // 茎
-            ctx.strokeStyle = '#228B22';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(40, 10);
-            ctx.lineTo(40, 25);
-            ctx.stroke();
-            
-            grape.appendChild(canvas);
-            document.getElementById('gameContainer').appendChild(grape);
-            
-            // アニメーション終了時の処理
-            grape.addEventListener('animationend', () => {
-                if (grape.parentNode) { // 既にキャッチされていなければ
-                    grape.remove();
-                    gameState.health -= 5;
-                    updateHealth();
-                }
-            });
-            
-            return grape;
-        }
-
-        function checkCollision(grape) {
-            const grapeRect = grape.getBoundingClientRect();
-            const girlRect = girlCanvas.getBoundingClientRect();
-            
-            return (grapeRect.left < girlRect.right &&
-                    grapeRect.right > girlRect.left &&
-                    grapeRect.top < girlRect.bottom &&
-                    grapeRect.bottom > girlRect.top);
-        }
-
-        function catchGrape(grape) {
-            grape.remove();
-            gameState.grapeCount++;
-            gameState.score += 10;
-            
-            // フローティングテキスト
-            showFloatingText('+10', gameState.girlX, window.innerHeight - 100);
-            
-            updateUI();
-            
-            if (gameState.grapeCount >= 11) {
-                drinkJuice();
+    function createGrape() {
+        const grape = document.createElement('div');
+        grape.className = 'grape';
+        grape.style.left = Math.random() * (window.innerWidth - 80) + 'px';
+        grape.style.animationDuration = (3 + Math.random() * 2) + 's';
+        
+        // ぶどうを描画
+        const canvas = document.createElement('canvas');
+        canvas.width = 80;
+        canvas.height = 80;
+        const ctx = canvas.getContext('2d');
+        
+        // ぶどうの房
+        ctx.fillStyle = '#8A2BE2';
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 4 - i; j++) {
+                ctx.beginPath();
+                ctx.arc(20 + j * 15 + i * 7, 25 + i * 12, 8, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
-
-        function drinkJuice() {
-            gameState.health = Math.min(100, gameState.health + 30);
-            gameState.grapeCount = 0;
-            gameState.score += 50;
-            
-            showFloatingText('ジュース完成！ +50', gameState.girlX, window.innerHeight - 150);
-            updateUI();
-            updateHealth();
-        }
-
-        function showFloatingText(text, x, y) {
-            const element = document.createElement('div');
-            element.className = 'floating-text';
-            element.textContent = text;
-            element.style.left = x + 'px';
-            element.style.top = y + 'px';
-            document.getElementById('gameContainer').appendChild(element);
-            
-            setTimeout(() => element.remove(), 1000);
-        }
-
-        function updateUI() {
-            document.getElementById('score').textContent = gameState.score;
-            document.getElementById('grapeCount').textContent = gameState.grapeCount;
-            drawJuice();
-        }
-
-        function updateHealth() {
-            const healthPercent = Math.max(0, gameState.health / 100 * 100);
-            document.getElementById('healthFill').style.width = healthPercent + '%';
-            
-            if (gameState.health <= 0) {
-                gameOver();
-            }
-        }
-
-        function gameOver() {
-            gameState.isPlaying = false;
-            alert(`ゲームオーバー！\nスコア: ${gameState.score}`);
-            location.reload();
-        }
-
-        function startGame() {
-            // ▼▼▼ 【変更点4】画像の読み込みが完了してからゲームを開始する ▼▼▼
-            if (!isGirlImageLoaded) {
-                alert("画像の読み込み中です。もう一度スタートボタンを押してください。");
-                return;
-            }
-            document.getElementById('startScreen').style.display = 'none';
-            gameState.isPlaying = true;
-            drawJuice();
-            gameLoop();
-        }
-
-        function gameLoop() {
-            if (!gameState.isPlaying) return;
-            
-            // ぶどうを生成
-            if (Math.random() < gameState.spawnRate) {
-                createGrape();
-            }
-            
-            // 衝突判定
-            const grapes = document.querySelectorAll('.grape');
-            grapes.forEach(grape => {
-                if (checkCollision(grape)) {
-                    catchGrape(grape);
-                }
-            });
-            
-            // 時間経過でヘルスが減少
-            if (Math.random() < 0.01) {
-                gameState.health -= 1;
+        
+        // 茎
+        ctx.strokeStyle = '#228B22';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(40, 10);
+        ctx.lineTo(40, 25);
+        ctx.stroke();
+        
+        grape.appendChild(canvas);
+        document.getElementById('gameContainer').appendChild(grape);
+        
+        // アニメーション終了時の処理
+        grape.addEventListener('animationend', () => {
+            if (grape.parentNode) { // 既にキャッチされていなければ
+                grape.remove();
+                gameState.health -= 5;
                 updateHealth();
             }
-            
-            requestAnimationFrame(gameLoop);
+        });
+        
+        return grape;
+    }
+
+    function checkCollision(grape) {
+        const grapeRect = grape.getBoundingClientRect();
+        const girlRect = girlCanvas.getBoundingClientRect();
+        
+        return (grapeRect.left < girlRect.right &&
+                grapeRect.right > girlRect.left &&
+                grapeRect.top < girlRect.bottom &&
+                grapeRect.bottom > girlRect.top);
+    }
+
+    function catchGrape(grape) {
+        grape.remove();
+        gameState.grapeCount++;
+        gameState.score += 10;
+        
+        // フローティングテキスト
+        showFloatingText('+10', gameState.girlX, window.innerHeight - 100);
+        
+        updateUI();
+        
+        if (gameState.grapeCount >= 11) {
+            drinkJuice();
         }
+    }
 
-        // タッチ・マウス操作
-        function handleMove(clientX) {
-            if (!gameState.isPlaying) return;
-            
-            const girlWidth = girlCanvas.width;
-            gameState.girlX = Math.max(girlWidth / 2, Math.min(window.innerWidth - (girlWidth / 2), clientX));
-            girlCanvas.style.left = gameState.girlX + 'px';
-        }
-
-        // イベントリスナー
-        document.addEventListener('mousemove', (e) => handleMove(e.clientX));
-        document.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            handleMove(e.touches[0].clientX);
-        }, { passive: false });
-
-        // 初期化
+    function drinkJuice() {
+        gameState.health = Math.min(100, gameState.health + 30);
+        gameState.grapeCount = 0;
+        gameState.score += 50;
+        
+        showFloatingText('ジュース完成！ +50', gameState.girlX, window.innerHeight - 150);
         updateUI();
         updateHealth();
-    </script>
+    }
+
+    function showFloatingText(text, x, y) {
+        const element = document.createElement('div');
+        element.className = 'floating-text';
+        element.textContent = text;
+        element.style.left = x + 'px';
+        element.style.top = y + 'px';
+        document.getElementById('gameContainer').appendChild(element);
+        
+        setTimeout(() => element.remove(), 1000);
+    }
+
+    function updateUI() {
+        document.getElementById('score').textContent = gameState.score;
+        document.getElementById('grapeCount').textContent = gameState.grapeCount;
+        drawJuice();
+    }
+
+    function updateHealth() {
+        const healthPercent = Math.max(0, gameState.health / 100 * 100);
+        document.getElementById('healthFill').style.width = healthPercent + '%';
+        
+        if (gameState.health <= 0) {
+            gameOver();
+        }
+    }
+
+    function gameOver() {
+        gameState.isPlaying = false;
+        alert(`ゲームオーバー！\nスコア: ${gameState.score}`);
+        location.reload();
+    }
+
+    function startGame() {
+        if (!isGirlImageLoaded) {
+            alert("画像の読み込み中です。もう一度スタートボタンを押してください。");
+            return;
+        }
+        document.getElementById('startScreen').style.display = 'none';
+        gameState.isPlaying = true;
+        drawJuice();
+        gameLoop();
+    }
+
+    function gameLoop() {
+        if (!gameState.isPlaying) return;
+        
+        // ぶどうを生成
+        if (Math.random() < gameState.spawnRate) {
+            createGrape();
+        }
+        
+        // 衝突判定
+        const grapes = document.querySelectorAll('.grape');
+        grapes.forEach(grape => {
+            if (checkCollision(grape)) {
+                catchGrape(grape);
+            }
+        });
+        
+        // 時間経過でヘルスが減少
+        if (Math.random() < 0.01) {
+            gameState.health -= 1;
+            updateHealth();
+        }
+        
+        requestAnimationFrame(gameLoop);
+    }
+
+    // タッチ・マウス操作
+    function handleMove(clientX) {
+        if (!gameState.isPlaying) return;
+        
+        const girlWidth = girlCanvas.width;
+        // 画面の端に行き過ぎないように制御
+        gameState.girlX = Math.max(girlWidth / 2, Math.min(window.innerWidth - (girlWidth / 2), clientX));
+        girlCanvas.style.left = gameState.girlX + 'px';
+        // 中央揃えのための transform をCSSに移動したので、JSからは削除
+    }
+
+    // イベントリスナー
+    document.addEventListener('mousemove', (e) => handleMove(e.clientX));
+    document.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        handleMove(e.touches[0].clientX);
+    }, { passive: false });
+
+    // 初期化
+    updateUI();
+    updateHealth();
+</script>
 </body>
 </html>
