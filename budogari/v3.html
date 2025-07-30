@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ぶどうキャッチゲーム</title>
     <style>
-        /* CSSは変更なし */
+        /* 全体のリセットと基本スタイル */
         * {
             margin: 0;
             padding: 0;
@@ -15,11 +15,12 @@
         body {
             font-family: 'Comic Sans MS', cursive, sans-serif;
             background: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
-            overflow: hidden;
-            touch-action: none;
-            user-select: none;
+            overflow: hidden; /* スクロールバーを非表示 */
+            touch-action: none; /* タッチイベントのデフォルト動作（スクロール、ピンチズーム）を抑制 */
+            user-select: none; /* テキスト選択を抑制 */
         }
 
+        /* ゲームコンテナのスタイル */
         #gameContainer {
             position: relative;
             width: 100vw;
@@ -27,30 +28,34 @@
             overflow: hidden;
         }
 
-        #girlCanvas { /* #girl から #girlCanvas に変更 */
+        /* 女の子のキャンバス（プレイヤー）のスタイル */
+        #girlCanvas {
             position: absolute;
-            bottom: 50px;
-            /* leftとtransformはJSで制御するため、初期値として残しつつ、JSで上書きされることを想定 */
-            left: 50%; 
-            transform: translateX(-50%);
+            bottom: 50px; /* 地面からの初期位置 */
+            left: 50%;
+            transform: translateX(-50%); /* 中央揃え */
             width: 120px;
             height: 160px;
             z-index: 10;
-            transition: none; /* leftを直接操作するため、transitionは無効化 */
+            /* ジャンプアニメーションのためのトランジション */
+            transition: bottom 0.2s ease-out; 
         }
 
-        .jumping {
-            bottom: 150px !important;
+        /* ジャンプ時のスタイル */
+        #girlCanvas.jumping {
+            bottom: 150px; /* ジャンプ時の高さ */
         }
 
+        /* ぶどうのスタイル */
         .grape {
             position: absolute;
             width: 80px;
             height: 80px;
             z-index: 5;
-            animation: fall linear;
+            animation: fall linear; /* 落下アニメーション */
         }
 
+        /* ジュースのしずくのスタイル（現在のゲームでは未使用） */
         .juice-drop {
             position: absolute;
             width: 60px;
@@ -59,15 +64,17 @@
             animation: fall linear;
         }
 
+        /* 落下アニメーションのキーフレーム */
         @keyframes fall {
             from {
-                top: -80px;
+                top: -80px; /* 画面外上部から開始 */
             }
             to {
-                top: 100vh;
+                top: 100vh; /* 画面外下部まで落下 */
             }
         }
 
+        /* UI要素のコンテナ */
         #ui {
             position: absolute;
             top: 20px;
@@ -79,6 +86,7 @@
             z-index: 20;
         }
 
+        /* ヘルスバーのコンテナ */
         #healthBar {
             position: absolute;
             top: 20px;
@@ -93,14 +101,16 @@
             z-index: 20;
         }
 
+        /* ヘルスバーの実際の表示部分 */
         #healthFill {
             height: 100%;
-            background: linear-gradient(90deg, #ff6b6b, #ffa500, #32cd32);
+            background: linear-gradient(90deg, #ff6b6b, #ffa500, #32cd32); /* グラデーション */
             border-radius: 12px;
-            transition: width 0.3s ease;
-            width: 100%;
+            transition: width 0.3s ease; /* 幅の変化を滑らかに */
+            width: 100%; /* 初期値 */
         }
 
+        /* ぶどうカウンターのスタイル */
         #grapeCounter {
             position: absolute;
             top: 70px;
@@ -113,17 +123,19 @@
             z-index: 20;
         }
 
+        /* フローティングテキスト（スコア増加など）のスタイル */
         .floating-text {
             position: absolute;
-            color: #FFD700;
+            color: #FFD700; /* 金色 */
             font-size: 24px;
             font-weight: bold;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-            pointer-events: none;
+            pointer-events: none; /* クリックイベントを透過 */
             z-index: 25;
-            animation: floatUp 1s ease-out forwards;
+            animation: floatUp 1s ease-out forwards; /* 浮き上がるアニメーション */
         }
 
+        /* フローティングテキストのアニメーションキーフレーム */
         @keyframes floatUp {
             0% {
                 opacity: 1;
@@ -135,6 +147,7 @@
             }
         }
 
+        /* スタート画面のスタイル */
         #startScreen {
             position: absolute;
             top: 0;
@@ -156,6 +169,7 @@
             margin-bottom: 30px;
         }
 
+        /* スタートボタンのスタイル */
         #startButton {
             background: linear-gradient(45deg, #ff6b6b, #ffa500);
             color: white;
@@ -166,19 +180,20 @@
             border-radius: 30px;
             cursor: pointer;
             box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-            transition: transform 0.2s;
+            transition: transform 0.2s; /* ホバー時のアニメーション */
         }
 
         #startButton:hover {
             transform: scale(1.1);
         }
 
+        /* 雲のスタイル */
         .cloud {
             position: absolute;
             background: white;
             border-radius: 50px;
             opacity: 0.8;
-            animation: drift 20s linear infinite;
+            animation: drift 20s linear infinite; /* 雲の移動アニメーション */
         }
 
         .cloud:before {
@@ -207,7 +222,7 @@
             height: 30px;
             top: 40%;
             animation-duration: 30s;
-            animation-delay: -10s;
+            animation-delay: -10s; /* アニメーション開始の遅延 */
         }
 
         .cloud2:before {
@@ -217,12 +232,13 @@
             left: 15px;
         }
 
+        /* 雲の移動アニメーションのキーフレーム */
         @keyframes drift {
             from {
-                left: -120px;
+                left: -120px; /* 画面外左から開始 */
             }
             to {
-                left: 100vw;
+                left: 100vw; /* 画面外右まで移動 */
             }
         }
     </style>
@@ -257,6 +273,9 @@
         <canvas id="girlCanvas" width="120" height="160"></canvas>
     </div>
 <script>
+    // Web Audio APIのコンテキストを作成
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
     let gameState = {
         isPlaying: false,
         score: 0,
@@ -265,7 +284,11 @@
         girlX: window.innerWidth / 2, // プレイヤーの中央位置
         grapes: [],
         grapeSpeed: 2,
-        spawnRate: 0.02
+        spawnRate: 0.02,
+        isJumping: false, // ジャンプ状態を管理するフラグ
+        lastTapTime: 0, // ダブルタッチ検出用
+        moveDirection: 0, // -1: 左, 0: 停止, 1: 右
+        playerSpeed: 8 // プレイヤーの移動速度
     };
 
     // キャンバス設定
@@ -275,10 +298,8 @@
     const juiceCtx = juiceCanvas.getContext('2d');
 
     const girlImage = new Image();
-    // ここをPNGファイルへのパスに変更します
-    // 例: girl.pngという名前の画像ファイルがHTMLファイルと同じディレクトリにある場合
     girlImage.src = "./girl.png"; 
-    
+
     let isGirlImageLoaded = false;
     girlImage.onload = () => {
         isGirlImageLoaded = true;
@@ -291,15 +312,46 @@
         alert("女の子の画像の読み込みに失敗しました。ゲームを開始できません。");
     };
 
+    // ドレミファソラシの周波数（中央Cを基準にしたA4=440Hzの音階）
+    const frequencies = {
+        'do': 261.63, // C4
+        're': 293.66, // D4
+        'mi': 329.63, // E4
+        'fa': 349.23, // F4
+        'so': 392.00, // G4
+        'la': 440.00, // A4
+        'si': 493.88  // B4
+    };
+    const notes = ['do', 're', 'mi', 'fa', 'so', 'la', 'si'];
+
+    // 音を再生する関数
+    function playNote(frequency, duration = 0.1, volume = 0.3) {
+        if (!audioContext) return; 
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.type = 'sine'; // 'sine', 'square', 'sawtooth', 'triangle' など
+        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+
+        gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration); // フェードアウト
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + duration);
+    }
+
     // 女の子を描画する関数
     function drawGirl() {
         girlCtx.clearRect(0, 0, girlCanvas.width, girlCanvas.height);
         if (isGirlImageLoaded) {
-            // 画像をcanvasに描画します
             girlCtx.drawImage(girlImage, 0, 0, girlCanvas.width, girlCanvas.height);
         }
     }
-    
+
     function drawJuice() {
         juiceCtx.clearRect(0, 0, 100, 120);
         
@@ -381,22 +433,45 @@
         const grapeRect = grape.getBoundingClientRect();
         const girlRect = girlCanvas.getBoundingClientRect();
         
-        return (grapeRect.left < girlRect.right &&
-                grapeRect.right > girlRect.left &&
-                grapeRect.top < girlRect.bottom &&
-                grapeRect.bottom > girlRect.top);
+        // ぶどうの底部が女の子の頭上から足元まで、横方向も重なるかチェック
+        // 女の子の高さの半分より上（頭部側）でキャッチ判定
+        const collisionHeightThreshold = girlRect.top + girlRect.height * 0.4; // 女の子の上半分くらい
+        
+        if (grapeRect.left < girlRect.right &&
+            grapeRect.right > girlRect.left &&
+            grapeRect.bottom > collisionHeightThreshold && // ぶどうの底が女の子の検出範囲に入ったら
+            grapeRect.top < girlRect.bottom) { // ぶどうの上部が女の子の足元より上にある
+            
+            catchGrape(grape, grapeRect.top); 
+            return true;
+        }
+        return false;
     }
 
-    function catchGrape(grape) {
+    function catchGrape(grape, grapeY) {
         grape.remove();
         gameState.grapeCount++;
         gameState.score += 10;
         
-        // フローティングテキスト
-        // girlXは中央座標なので、テキスト表示位置も調整
         showFloatingText('+10', gameState.girlX - 20, window.innerHeight - 100);
         
         updateUI();
+
+        // 音を鳴らすロジック (Web Audio APIを使用)
+        const screenHeight = window.innerHeight;
+        // キャッチされるY座標の範囲を正規化
+        // 例えば、画面の下端(window.innerHeight)を0、画面の上端(0)を1とする
+        const normalizedY = grapeY / screenHeight; 
+        
+        // normalizedYは0(上)から1(下)になるので、これをnotes.lengthに合わせて反転
+        // 0.0 -> notes.length-1 (最高音)
+        // 1.0 -> 0 (最低音)
+        const noteIndex = Math.min(notes.length - 1, Math.max(0, Math.floor((1 - normalizedY) * notes.length))); 
+        
+        const noteToPlay = notes[noteIndex];
+        if (frequencies[noteToPlay]) {
+            playNote(frequencies[noteToPlay]);
+        }
         
         if (gameState.grapeCount >= 11) {
             drinkJuice();
@@ -445,7 +520,26 @@
         location.reload();
     }
 
+    // ジャンプ機能
+    function jump() {
+        if (!gameState.isPlaying || gameState.isJumping) return;
+
+        gameState.isJumping = true;
+        girlCanvas.classList.add('jumping'); // CSSクラスを追加してジャンプアニメーション開始
+
+        setTimeout(() => {
+            girlCanvas.classList.remove('jumping'); // CSSクラスを削除して元に戻る
+            gameState.isJumping = false;
+        }, 400); // ジャンプアニメーションの時間（CSSのtransition時間と合わせる）
+    }
+
+    // ゲーム開始関数 (HTMLのonclick属性から呼ばれる)
     function startGame() {
+        // ユーザーインタラクションがあったときにAudioContextをアクティブにする
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+
         if (!isGirlImageLoaded) {
             alert("画像の読み込み中です。もう一度スタートボタンを押してください。");
             return;
@@ -459,21 +553,29 @@
     function gameLoop() {
         if (!gameState.isPlaying) return;
         
-        // ぶどうを生成
+        // プレイヤーの移動を更新
+        if (gameState.moveDirection !== 0) {
+            // プレイヤーの新しいX座標を計算
+            let newGirlX = gameState.girlX + gameState.moveDirection * gameState.playerSpeed;
+            
+            // 画面の端に行き過ぎないように制御
+            const girlWidth = girlCanvas.width;
+            newGirlX = Math.max(girlWidth / 2, Math.min(window.innerWidth - (girlWidth / 2), newGirlX));
+            
+            gameState.girlX = newGirlX;
+            girlCanvas.style.left = (gameState.girlX - girlWidth / 2) + 'px';
+        }
+
         if (Math.random() < gameState.spawnRate) {
             createGrape();
         }
         
-        // 衝突判定
         const grapes = document.querySelectorAll('.grape');
         grapes.forEach(grape => {
-            if (checkCollision(grape)) {
-                catchGrape(grape);
-            }
+            checkCollision(grape); 
         });
         
-        // 時間経過でヘルスが減少
-        if (Math.random() < 0.005) { // 減少頻度を少し下げました
+        if (Math.random() < 0.005) { 
             gameState.health -= 1;
             updateHealth();
         }
@@ -481,23 +583,75 @@
         requestAnimationFrame(gameLoop);
     }
 
-    // タッチ・マウス操作
+    // プレイヤー移動（マウス/タッチ）
     function handleMove(clientX) {
         if (!gameState.isPlaying) return;
         
+        // キーボード移動中はマウス/タッチ移動を一時的に無効にするか、
+        // あるいは両方を許容するか。今回は両方を許容するシンプルな実装。
+        // キーボード移動とマウス/タッチ移動が同時に発生した場合、
+        // 最後にイベントが発生した方が優先される形になります。
+        
         const girlWidth = girlCanvas.width;
-        // 画面の端に行き過ぎないように制御し、かつ中央揃えを維持
         gameState.girlX = Math.max(girlWidth / 2, Math.min(window.innerWidth - (girlWidth / 2), clientX));
-        // girlCanvasの左端を計算して設定
         girlCanvas.style.left = (gameState.girlX - girlWidth / 2) + 'px';
     }
 
     // イベントリスナー
     document.addEventListener('mousemove', (e) => handleMove(e.clientX));
     document.addEventListener('touchmove', (e) => {
-        e.preventDefault();
+        e.preventDefault(); // スクロール防止
         handleMove(e.touches[0].clientX);
     }, { passive: false });
+
+    // キーボードイベント (ジャンプと左右移動)
+    document.addEventListener('keydown', (e) => {
+        if (!gameState.isPlaying) return;
+
+        if (e.code === 'Space' || e.code === 'ArrowUp') {
+            e.preventDefault(); // スペースキーによるスクロールなどを防止
+            jump();
+        } else if (e.code === 'ArrowLeft') {
+            gameState.moveDirection = -1; // 左移動
+        } else if (e.code === 'ArrowRight') {
+            gameState.moveDirection = 1; // 右移動
+        }
+    });
+
+    document.addEventListener('keyup', (e) => {
+        if (!gameState.isPlaying) return;
+
+        if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+            // 押されていたキーが離されたら移動を停止
+            // 両方のキーが押されている状態で片方が離された場合を考慮
+            if ((e.code === 'ArrowLeft' && gameState.moveDirection === -1) || 
+                (e.code === 'ArrowRight' && gameState.moveDirection === 1)) {
+                gameState.moveDirection = 0;
+            }
+        }
+    });
+
+    // マウス ダブルクリック
+    document.addEventListener('dblclick', (e) => {
+        if (gameState.isPlaying) {
+            jump();
+        }
+    });
+
+    // タッチ ダブルタップ
+    document.addEventListener('touchstart', (e) => {
+        if (!gameState.isPlaying) return;
+        
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - gameState.lastTapTime;
+        
+        if (tapLength < 300 && tapLength > 0) { // 300ms 以内の2回目のタップ
+            e.preventDefault(); // デフォルトのダブルタップ動作（ズームなど）を防止
+            jump();
+        }
+        gameState.lastTapTime = currentTime;
+    }, { passive: false });
+
 
     // 初期化
     updateUI();
