@@ -1,0 +1,30 @@
+version: 1
+
+identity:
+  name: aw-pattern-gen
+  title: "aw pattern-gen デモ"
+
+appearance:
+  theme: pattern
+  source:
+    svg: patterns/latest.svg
+  page:
+    accent: cyan
+    background: slate
+
+assets:
+  favicon:
+    source: patterns/latest.svg
+    sizes: [16, 32, 48, 64]
+    output: favicon.ico
+
+apply:
+  - page
+  - favicon
+
+workflow:
+  on:
+    - pattern-generated
+  actions:
+    - generate-favicon
+    - update-page
